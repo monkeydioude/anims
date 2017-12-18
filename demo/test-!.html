@@ -1,0 +1,31 @@
+<html>
+    <head>
+            <script type="text/javascript" src="../src/updater.js"></script>
+            <script type="text/javascript" src="../src/logger.js"></script>
+            <script type="text/javascript" src="../src/loop.js"></script>
+        </head>
+    <body>
+        <div id="currentFps"></div>
+
+        <button data-action="loop-start">Loop start</button>
+        <button data-action="loop-pause">Loop pause</button>
+        <button data-action="hide-logs">Toggle logs</button>
+        <input type="text" data-action="set-fps" />
+        <script type="text/javascript">
+            var loop = new Loop(30),
+                logger = new Logger("info", true);
+
+            loop.dataUpdater.add(logger.log.bind(logger));
+
+            /* ======= */
+            document.querySelector("[data-action='loop-start']").addEventListener("click", loop.start.bind(loop));
+            document.querySelector("[data-action='loop-pause']").addEventListener("click", loop.pause.bind(loop));
+            document.querySelector("[data-action='hide-logs']").addEventListener("click", logger.toggleLogs.bind(logger));
+            document.querySelector("[data-action='set-fps']").addEventListener("keypress", function(e) {
+                if (e.charCode == 13) {
+                    loop.setFrequencies(parseInt(e.target.value));
+                }
+            });
+        </script>
+</body>
+</html>
