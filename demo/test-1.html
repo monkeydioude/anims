@@ -49,7 +49,7 @@
                     err = loop.graphicUpdater.add(function(T) {
                         shittyFps.cT += T;
                         shittyFps.m++;
-                        document.querySelector("#fps").innerHTML = (shittyFps.m / (shittyFps.cT / 1000));
+                        document.querySelector("#fps").innerHTML = ((shittyFps.m / (shittyFps.cT / 1000)).toFixed(4));
                         document.querySelector("#T").innerHTML = "~" + T.toFixed(4);
 
                         if (shittyFps.cT >= 1000) {
