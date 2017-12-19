@@ -1,18 +1,13 @@
 var Logger = function(type, shouldDisplayLogs) {
-    if (type) {
-        type = type
+    if (!type) {
+        type = "info"
     }
 
-    if (!shouldDisplayLogs) {
+    if (!shouldDisplayLogs && shouldDisplayLogs !== false) {
         shouldDisplayLogs = true;
     }
 
     this.shouldDisplayLogs = shouldDisplayLogs;
-}
-
-Logger.prototype = {
-    type: "info",
-    shouldDisplayLogs: false
 }
 
 Logger.prototype.log = function(msg) {

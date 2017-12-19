@@ -1,10 +1,10 @@
-var Updater = function() {}
-
-Updater.prototype = {
-    // json object
-    nodes: {},
-    // int
-    defaultNameCounter: 0
+var Updater = function(name) {
+    if (!name) {
+        name = Date.now();
+    }
+    this.name = name;
+    this.nodes = {};
+    this.defaultNameCounter = 0;
 }
 
 /**

@@ -1,30 +1,18 @@
-var Loop = function(fps) {
+var Loop = function(fps)
+{
     if (!fps) {
         console.error("fps parameter needed");
         return ;
     }
 
-    this.setFrequencies(fps);
-    this.dataUpdater = new Updater();
-    this.graphicUpdater = new Updater();
-};
-
-Loop.prototype = {
-    // loop frequency
-    fps: 0,
-    // duration between loop iteration
-    iF: 0,
-    // duration between loop iteration in milliseconds
-    miF: 0,
     // Timestamp of previous loop iteration (not requestAnimationFrame call)
-    pT: 0,
+    this.pT = 0;
+    this.cbSeed = null;
 
-    dT: 0,
-
-    cbSeed: null,
-    dataUpdater: null,
-    graphicUpdater: null
-}
+    this.setFrequencies(fps);
+    this.dataUpdater = new Updater("data");
+    this.graphicUpdater = new Updater("graphic");
+};
 
 Loop.prototype.pause = function() {
     console.info("paused");
@@ -52,6 +40,7 @@ Loop.prototype.setFrequencies = function(fps) {
 Loop.prototype.process = function(T) {
 
     this.dataUpdater.update(T);
+    this.graphicUpdater.update(T);
 
     this.cbSeed = setTimeout(function(){this.process(this.miF);}.bind(this), this.miF);
 }
