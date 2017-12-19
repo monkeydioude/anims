@@ -4,6 +4,9 @@
             <script type="text/javascript" src="../src/logger.js"></script>
             <script type="text/javascript" src="../src/loop.js"></script>
             <style>
+                #board {
+                    background-color: #eee;
+                }
             </style>
     </head>
     <body>
@@ -17,12 +20,18 @@
             <span id="T"></span> ms/frame
         </div>
 
+        <canvas id="board" width="1024" height="600"></canvas>
+
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", function() {
                 var initialFPS = 30,
                     loop = new Loop(initialFPS),
                     logger = new Logger("info", false),
-                    err = null;
+                    err = null,
+                    shittyFps = {
+                        m: 0,
+                        cT: 0
+                    };
 
                     err = loop.dataUpdater.add(logger.log.bind(logger));
                     if (err != null) {
@@ -30,8 +39,17 @@
                     }
 
                     err = loop.graphicUpdater.add(function(T) {
-                        document.querySelector("#fps").innerHTML = loop.fps;
+                        shittyFps.cT += T;
+                        shittyFps.m++;
+                        document.querySelector("#fps").innerHTML = (shittyFps.m / (shittyFps.cT / 1000));
                         document.querySelector("#T").innerHTML = "~" + T.toFixed(4);
+
+                        if (shittyFps.cT >= 1000) {
+                            shittyFps = {
+                                m: 0,
+                                cT: 0
+                            };
+                        }
                     });
                     if (err != null) {
                         console.error(err)
@@ -50,7 +68,7 @@
                     }
                 });
                 fpsSelector.value = initialFPS;
-            })
+            });
         </script>
     </body>
 </html>

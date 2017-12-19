@@ -3,6 +3,8 @@ var Logger = function(type, shouldDisplayLogs) {
         type = "info"
     }
 
+    this.type = type;
+
     if (!shouldDisplayLogs && shouldDisplayLogs !== false) {
         shouldDisplayLogs = true;
     }
@@ -18,6 +20,6 @@ Logger.prototype.log = function(msg) {
 }
 
 Logger.prototype.toggleLogs = function() {
-    console.log("Setting logs from", this.shouldDisplayLogs, "to", !this.shouldDisplayLogs)
+    console[this.type]("Setting logs from", this.shouldDisplayLogs, "to", !this.shouldDisplayLogs);
     this.shouldDisplayLogs = !this.shouldDisplayLogs;
 }

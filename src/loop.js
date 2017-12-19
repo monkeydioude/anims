@@ -21,6 +21,7 @@ Loop.prototype.pause = function() {
 
 Loop.prototype.start = function() {
     console.info("started");
+    this.pT = +new Date();
     this.process(0);    
 }
 
@@ -38,7 +39,11 @@ Loop.prototype.setFrequencies = function(fps) {
 }
 
 Loop.prototype.process = function(T) {
+    var nT = +new Date(),
+        d = T - (nT - this.pT);
 
+    this.pT = nT;
+    T += d;
     this.dataUpdater.update(T);
     this.graphicUpdater.update(T);
 
