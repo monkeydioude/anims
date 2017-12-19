@@ -1,6 +1,7 @@
 <html>
     <head>
             <script type="text/javascript" src="../src/updater.js"></script>
+            <script type="text/javascript" src="../src/browser.js"></script>
             <script type="text/javascript" src="../src/logger.js"></script>
             <script type="text/javascript" src="../src/loop.js"></script>
             <style>
@@ -15,11 +16,12 @@
         <button data-action="hide-logs">Toggle logs</button>
         FPS:
         <input type="text" data-action="set-fps" />
+        <span data-display="crap">┬─┬ノ( º _ ºノ)</span>
         <div id="fpsData">
             <span id="fps"></span> fps <br />
             <span id="T"></span> ms/frame
         </div>
-
+        
         <canvas id="board" width="1024" height="600"></canvas>
 
         <script type="text/javascript">
@@ -32,6 +34,12 @@
                         m: 0,
                         cT: 0
                     };
+
+                    (new Browser())
+                        .onDocumentHidden(loop.pause.bind(loop))
+                        .onDocumentVisible(loop.start.bind(loop))
+                        .onBlur(function(){document.querySelector('[data-display="crap"]').innerHTML = '(╯°□°）╯︵ ┻━┻';})
+                        .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
 
                     err = loop.dataUpdater.add(logger.log.bind(logger));
                     if (err != null) {
