@@ -1,4 +1,4 @@
-var Cycle = function(fps, cbAction)
+var Cycle = function(fps)
 {
     this.fps = fps;
     this.iF = 1 / fps;
@@ -7,12 +7,12 @@ var Cycle = function(fps, cbAction)
     this.cbAction = cbAction;
 }
 
-Cycle.prototype.update = function(T)
+Cycle.prototype.update = function(T, cbAction)
 {
     this.cT += T;
 
     while (this.cT >= this.miF) {
-        this.cbAction(this.miF);
+        cbAction(this.miF);
         this.cT -= this.miF;
     }
 }
