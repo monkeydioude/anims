@@ -31,7 +31,8 @@
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", function() {
                 var initialFPS = 30,
-                    loop = new Loop(initialFPS),
+                    engine = new Engine(document.querySelector("#board")),
+                    loop = new Loop(initialFPS, engine),
                     logger = new Logger("info", false),
                     err = null,
                     shittyFps = {
@@ -50,13 +51,13 @@
                         console.error(err)
                     }
 
-                    err = loop.graphicUpdater.add(function(T) {
+                    err = loop.dataUpdater.add(function(T) {
                         shittyFps.cT += T;
                         shittyFps.m++;
-                        document.querySelector("#fps").innerHTML = ((shittyFps.m / (shittyFps.cT / 1000)).toFixed(4));
-                        document.querySelector("#T").innerHTML = "~" + T.toFixed(4);
+                        document.querySelector("#T").innerHTML = T.toFixed(4);
 
-                        if (shittyFps.cT >= 1000) {
+                        if (shittyFps.cT >= 100) {
+                            document.querySelector("#fps").innerHTML = ((shittyFps.m / shittyFps.cT) * 1000).toFixed(4);
                             shittyFps = {
                                 m: 0,
                                 cT: 0

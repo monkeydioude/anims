@@ -11,9 +11,9 @@ var Updater = function(name) {
  * 
  * @param {int} T 
  */
-Updater.prototype.update = function(T) {
+Updater.prototype.update = function(data) {
     for (var i in this.nodes) {
-        if (this.nodes[i](T) == -1) {
+        if (this.nodes[i](data) == -1) {
             delete this.nodes[i];
         }
     }

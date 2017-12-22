@@ -1,4 +1,4 @@
-var Pixel = function(x, y) {
+var Pixel = function(x, y, color) {
     this.x = x;
     this.y = y;
 }
