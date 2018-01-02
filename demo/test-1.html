@@ -40,18 +40,20 @@
                         cT: 0
                     };
 
+                    loop.setMode("PLAY");
+
                     (new Browser())
                         .onDocumentHidden(loop.pause.bind(loop))
                         .onDocumentVisible(loop.start.bind(loop))
                         .onBlur(function(){document.querySelector('[data-display="crap"]').innerHTML = '(╯°□°）╯︵ ┻━┻';})
                         .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
 
-                    err = loop.dataUpdater.add(logger.log.bind(logger));
+                    err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
                     if (err != null) {
                         console.error(err)
                     }
 
-                    err = loop.dataUpdater.add(function(T) {
+                    err = loop.dataUpdater.add("PLAY", function(T) {
                         shittyFps.cT += T;
                         shittyFps.m++;
                         document.querySelector("#T").innerHTML = T.toFixed(4);

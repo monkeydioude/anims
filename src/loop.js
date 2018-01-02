@@ -1,4 +1,4 @@
-var Loop = function(fps, engine)
+var Loop = function(fps, engine, startingMode)
 {
     if (!fps) {
         console.error("fps parameter needed");
@@ -13,11 +13,21 @@ var Loop = function(fps, engine)
     this.engine = engine;
     this.dataUpdater = new Updater("data");
     this.graphicUpdater = new Updater("graphic");
+    this.mode = startingMode;
 };
+
+/**
+ * @param {*} mode 
+ */
+Loop.prototype.setMode = function(mode) {
+    console.info("Seeting mode from", this.mode, "to", mode);
+    this.mode = mode;
+}
 
 Loop.prototype.pause = function() {
     console.info("paused");
     clearTimeout(this.cbSeed);
+    clearTimeout(this.dSeed);
 }
 
 Loop.prototype.start = function() {
@@ -41,11 +51,16 @@ Loop.prototype.setFrequencies = function(fps) {
 
 Loop.prototype.process = function(T) {
     var nT = window.performance.now();
+    console.log("process");
 
-    this.dataUpdater.update(T);
+    this.dataUpdater.update(this.mode, T);
     this.cbSeed = setTimeout(function(){this.process(this.miF);}.bind(this), T - (window.performance.now()- nT));
 }
 
-Loop.prototype.display = function() {
-    this.graphicUpdater.update(this.engine);
+Loop.prototype.display = function(T) {
+    var nT = window.performance.now();
+    console.log("display");
+
+    this.graphicUpdater.update(this.mode, this.engine);
+    this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now()- nT));
 }

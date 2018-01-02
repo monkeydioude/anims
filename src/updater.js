@@ -11,10 +11,15 @@ var Updater = function(name) {
  * 
  * @param {int} T 
  */
-Updater.prototype.update = function(data) {
-    for (var i in this.nodes) {
-        if (this.nodes[i](data) == -1) {
-            delete this.nodes[i];
+Updater.prototype.update = function(mode, data) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return ;
+    }
+    var n = this.nodes[mode];
+
+    for (var i in n) {
+        if (n[i](data) == -1) {
+            delete n[i];
         }
     }
 }
@@ -26,17 +31,25 @@ Updater.prototype.update = function(data) {
  * 
  * @return {null|string}
  */
-Updater.prototype.add = function(cb, name) {
+Updater.prototype.add = function(mode, cb, name) {
+    if (!mode) {
+        return "Mode must be provided";
+    }
+    
     if (!name) {
         name = this.defaultNameCounter;
         this.defaultNameCounter++;
     }
 
-    if (this.nodes.hasOwnProperty(name)) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        this.nodes[mode] = {};
+    }
+
+    if (this.nodes[mode].hasOwnProperty(name)) {
         return "Could not add element to the updater list, name already exists";
     }
 
-    this.nodes[name] = cb;
+    this.nodes[mode][name] = cb;
 
     return null;
 }
