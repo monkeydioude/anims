@@ -2,6 +2,7 @@
     <head>
         <script type="text/javascript" src="../src/cycle.js"></script>
         <script type="text/javascript" src="../src/engine.js"></script>
+        <script type="text/javascript" src="../src/render/color.js"></script>
         <script type="text/javascript" src="../src/render/pixel.js"></script>
         <script type="text/javascript" src="../src/anims/inquisition.js"></script>
         <script type="text/javascript" src="../src/updater.js"></script>
@@ -50,7 +51,7 @@
 
                     err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
                     if (err != null) {
-                        console.error(err)
+                        console.error(err);
                     }
 
                     err = loop.dataUpdater.add("PLAY", function(T) {
@@ -67,7 +68,54 @@
                         }
                     });
                     if (err != null) {
-                        console.error(err)
+                        console.error(err);
+                    }
+
+                    var dummyT = 0,
+                        dummyLock = true;
+                    loop.dataUpdater.add("PLAY", function(T) {
+                        dummyT += T;
+                        if (dummyT >= 0) {
+                            dummyLock = false;
+                            dummyT = 0
+                        }
+                    });
+                    loop.graphicUpdater.add("PLAY", function(engine) {
+                        if (dummyLock) {
+                            return;
+                        }
+//                        engine.clearCanvas();
+                    });
+                    err = loop.graphicUpdater.add("PLAY", function(engine) {
+                        if (dummyLock) {
+                            return;
+                        }
+                        dummyLock = true;
+                        var m = [6, 6],
+                            sX = (Math.random() * 1024) << 0,
+                            sY = (Math.random() * 600) << 0,
+                            r = (Math.random() * 255) << 0,
+                            g = (Math.random() * 255) << 0,
+                            b = (Math.random() * 255) << 0,
+                            a = Math.random();
+
+                        if (sX > (1024 - m[0])) {
+                            sX = 1024 - m[0];
+                        }
+                        
+                        if (sY > (600 - m[1])) {
+                            sY = 600 - m[1];
+                        }
+
+
+                        for (var x = 0; x < m[0]; x++) {
+                            for (var y = 0; y < m[1]; y++) {
+                                (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(engine);
+                            }
+                        }
+                    });
+                    if (err != null) {
+                        console.error(err);
                     }
 
                 /* ======= */

@@ -51,16 +51,14 @@ Loop.prototype.setFrequencies = function(fps) {
 
 Loop.prototype.process = function(T) {
     var nT = window.performance.now();
-    console.log("process");
 
     this.dataUpdater.update(this.mode, T);
-    this.cbSeed = setTimeout(function(){this.process(this.miF);}.bind(this), T - (window.performance.now()- nT));
+    this.cbSeed = setTimeout(function(){this.process(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
 
 Loop.prototype.display = function(T) {
     var nT = window.performance.now();
-    console.log("display");
 
     this.graphicUpdater.update(this.mode, this.engine);
-    this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now()- nT));
+    this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
