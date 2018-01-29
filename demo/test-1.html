@@ -49,6 +49,10 @@
                         .onBlur(function(){document.querySelector('[data-display="crap"]').innerHTML = '(╯°□°）╯︵ ┻━┻';})
                         .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
 
+                    loop.graphicUpdater.add("PLAY", function(engine) {
+                       engine.clearCanvas();
+                    });
+
                     err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
                     if (err != null) {
                         console.error(err);
@@ -72,7 +76,8 @@
                     }
 
                     var dummyT = 0,
-                        dummyLock = true;
+                        dummyLock = true,
+                        imgDataDummy = null;
                     loop.dataUpdater.add("PLAY", function(T) {
                         dummyT += T;
                         if (dummyT >= 0) {
@@ -80,15 +85,12 @@
                             dummyT = 0
                         }
                     });
-                    loop.graphicUpdater.add("PLAY", function(engine) {
-                        if (dummyLock) {
-                            return;
-                        }
-//                        engine.clearCanvas();
-                    });
                     err = loop.graphicUpdater.add("PLAY", function(engine) {
                         if (dummyLock) {
                             return;
+                        }
+                        if (imgDataDummy) {
+                            engine.drawImageData(imgDataDummy);
                         }
                         dummyLock = true;
                         var m = [6, 6],
@@ -113,6 +115,7 @@
                                 (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(engine);
                             }
                         }
+                        imgDataDummy = engine.c.getImageData(0, 0, 1024, 600);
                     });
                     if (err != null) {
                         console.error(err);
