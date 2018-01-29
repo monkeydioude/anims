@@ -27,7 +27,9 @@
             <span id="T"></span> ms/frame
         </div>
         
-        <canvas id="board" width="1024" height="600"></canvas>
+        <br /><button data-action="clear-canvas">Clear</button><br />
+        <canvas id="board" width="60" height="60"></canvas>
+        <canvas id="buffer" width="30" height="30"></canvas>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", function() {
@@ -49,8 +51,8 @@
                         .onBlur(function(){document.querySelector('[data-display="crap"]').innerHTML = '(╯°□°）╯︵ ┻━┻';})
                         .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
 
-                    loop.graphicUpdater.add("PLAY", function(engine) {
-                       engine.clearCanvas();
+                    loop.graphicUpdater.add("PLAY", function(T, engine) {
+                    //    engine.clearCanvas();
                     });
 
                     err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
@@ -85,7 +87,7 @@
                             dummyT = 0
                         }
                     });
-                    err = loop.graphicUpdater.add("PLAY", function(engine) {
+                    err = loop.graphicUpdater.add("PLAY", function(T, engine) {
                         if (dummyLock) {
                             return;
                         }
@@ -94,19 +96,19 @@
                         }
                         dummyLock = true;
                         var m = [6, 6],
-                            sX = (Math.random() * 1024) << 0,
-                            sY = (Math.random() * 600) << 0,
+                            sX = (Math.random() * engine.boardH()) << 0,
+                            sY = (Math.random() * engine.boardW()) << 0,
                             r = (Math.random() * 255) << 0,
                             g = (Math.random() * 255) << 0,
                             b = (Math.random() * 255) << 0,
                             a = Math.random();
 
-                        if (sX > (1024 - m[0])) {
-                            sX = 1024 - m[0];
+                        if (sX > (engine.boardW() - m[0])) {
+                            sX = engine.boardW() - m[0];
                         }
                         
-                        if (sY > (600 - m[1])) {
-                            sY = 600 - m[1];
+                        if (sY > (engine.boardH() - m[1])) {
+                            sY = engine.boardH() - m[1];
                         }
 
 
@@ -115,7 +117,8 @@
                                 (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(engine);
                             }
                         }
-                        imgDataDummy = engine.c.getImageData(0, 0, 1024, 600);
+                        imgDataDummy = engine.c.getImageData(0, 0, engine.boardW(), engine.boardH());
+
                     });
                     if (err != null) {
                         console.error(err);
@@ -127,6 +130,7 @@
                 document.querySelector("[data-action='loop-start']").addEventListener("click", loop.start.bind(loop));
                 document.querySelector("[data-action='loop-pause']").addEventListener("click", loop.pause.bind(loop));
                 document.querySelector("[data-action='hide-logs']").addEventListener("click", logger.toggleLogs.bind(logger));
+                document.querySelector("[data-action='clear-canvas']").addEventListener("click", engine.clearCanvas.bind(engine));
 
                 fpsSelector.addEventListener("keypress", function(e) {
                     if (e.charCode == 13) {

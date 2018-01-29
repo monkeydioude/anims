@@ -11,14 +11,14 @@ var Updater = function(name) {
  * 
  * @param {int} T 
  */
-Updater.prototype.update = function(mode, data) {
+Updater.prototype.update = function(mode, T, engine) {
     if (!this.nodes.hasOwnProperty(mode)) {
         return ;
     }
     var n = this.nodes[mode];
 
     for (var i in n) {
-        if (n[i](data) == -1) {
+        if (n[i](T, engine) == -1) {
             delete n[i];
         }
     }

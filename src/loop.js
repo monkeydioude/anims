@@ -33,7 +33,7 @@ Loop.prototype.pause = function() {
 Loop.prototype.start = function() {
     console.info("started");
     setTimeout(function(){this.process(0);}.bind(this), 0);
-    setTimeout(function(){this.display();}.bind(this), 0);
+    setTimeout(function(){this.display(0);}.bind(this), 0);
 }
 
 /**
@@ -49,6 +49,10 @@ Loop.prototype.setFrequencies = function(fps) {
     console.info("setFrequencies("+fps+") = {", "\n\tfps:", fps, "\n\tiF:", this.iF, "\n\tmiF:", this.miF, "\n}");
 }
 
+/**
+ * 
+ * @param {*} T 
+ */
 Loop.prototype.process = function(T) {
     var nT = window.performance.now();
 
@@ -56,9 +60,13 @@ Loop.prototype.process = function(T) {
     this.cbSeed = setTimeout(function(){this.process(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
 
+/**
+ * 
+ * @param {*} T 
+ */
 Loop.prototype.display = function(T) {
     var nT = window.performance.now();
 
-    this.graphicUpdater.update(this.mode, this.engine);
+    this.graphicUpdater.update(this.mode, T, this.engine);
     this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
