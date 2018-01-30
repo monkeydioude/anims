@@ -27,14 +27,19 @@
             <span id="T"></span> ms/frame
         </div>
         
-        <br /><button data-action="clear-canvas">Clear</button><br />
+        <br />
+        <button data-action="clear-canvas">Clear</button>
+        <button data-action="stop-animation">Stop</button>
+        <button data-action="reload-animation">Reload</button>
+        <br />
         <canvas id="board" width="60" height="60"></canvas>
-        <canvas id="buffer" width="30" height="30"></canvas>
+        <canvas id="buffer" width="60" height="60"></canvas>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", function() {
                 var initialFPS = 30,
                     engine = new Engine(document.querySelector("#board")),
+                    devEngine = new Engine(document.querySelector('#buffer')),
                     loop = new Loop(initialFPS, engine),
                     logger = new Logger("info", false),
                     err = null,
@@ -42,6 +47,41 @@
                         m: 0,
                         cT: 0
                     };
+
+                    devEngine.drawImageData(new ImageData(60, 60), 60, 60);
+
+                    var pixelAnim = function(T, engine) {
+                        if (dummyLock) {
+                            return;
+                        }
+                        if (imgDataDummy || 1) {
+                            
+                        }
+                        dummyLock = true;
+                        var m = [6, 6],
+                            sX = (Math.random() * engine.boardH()) << 0,
+                            sY = (Math.random() * engine.boardW()) << 0,
+                            r = (Math.random() * 255) << 0,
+                            g = (Math.random() * 255) << 0,
+                            b = (Math.random() * 255) << 0,
+                            a = Math.random();
+
+                        if (sX > (engine.boardW() - m[0])) {
+                            sX = engine.boardW() - m[0];
+                        }
+                        
+                        if (sY > (engine.boardH() - m[1])) {
+                            sY = engine.boardH() - m[1];
+                        }
+
+
+                        for (var x = 0; x < m[0]; x++) {
+                            for (var y = 0; y < m[1]; y++) {
+                                (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(engine);
+                            }
+                        }
+                        imgDataDummy = engine.c.getImageData(0, 0, engine.boardW(), engine.boardH());
+                    }
 
                     loop.setMode("PLAY");
 
@@ -52,7 +92,7 @@
                         .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
 
                     loop.graphicUpdater.add("PLAY", function(T, engine) {
-                    //    engine.clearCanvas();
+                       engine.clearCanvas();
                     });
 
                     err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
@@ -80,6 +120,7 @@
                     var dummyT = 0,
                         dummyLock = true,
                         imgDataDummy = null;
+
                     loop.dataUpdater.add("PLAY", function(T) {
                         dummyT += T;
                         if (dummyT >= 0) {
@@ -87,39 +128,8 @@
                             dummyT = 0
                         }
                     });
-                    err = loop.graphicUpdater.add("PLAY", function(T, engine) {
-                        if (dummyLock) {
-                            return;
-                        }
-                        if (imgDataDummy) {
-                            engine.drawImageData(imgDataDummy);
-                        }
-                        dummyLock = true;
-                        var m = [6, 6],
-                            sX = (Math.random() * engine.boardH()) << 0,
-                            sY = (Math.random() * engine.boardW()) << 0,
-                            r = (Math.random() * 255) << 0,
-                            g = (Math.random() * 255) << 0,
-                            b = (Math.random() * 255) << 0,
-                            a = Math.random();
-
-                        if (sX > (engine.boardW() - m[0])) {
-                            sX = engine.boardW() - m[0];
-                        }
-                        
-                        if (sY > (engine.boardH() - m[1])) {
-                            sY = engine.boardH() - m[1];
-                        }
-
-
-                        for (var x = 0; x < m[0]; x++) {
-                            for (var y = 0; y < m[1]; y++) {
-                                (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(engine);
-                            }
-                        }
-                        imgDataDummy = engine.c.getImageData(0, 0, engine.boardW(), engine.boardH());
-
-                    });
+                    
+                    err = loop.graphicUpdater.add("PLAY", pixelAnim, "pixelAnim");
                     if (err != null) {
                         console.error(err);
                     }
@@ -131,6 +141,22 @@
                 document.querySelector("[data-action='loop-pause']").addEventListener("click", loop.pause.bind(loop));
                 document.querySelector("[data-action='hide-logs']").addEventListener("click", logger.toggleLogs.bind(logger));
                 document.querySelector("[data-action='clear-canvas']").addEventListener("click", engine.clearCanvas.bind(engine));
+                document.querySelector("[data-action='stop-animation']").addEventListener("click", function(){
+                    err = loop.graphicUpdater.remove("PLAY", "pixelAnim");
+                    if (err != null) {
+                        console.info(err);
+                    }
+                });
+                document.querySelector("[data-action='reload-animation']").addEventListener("click", function(){
+                    err = loop.graphicUpdater.remove("PLAY", "pixelAnim");
+                    if (err != null) {
+                        console.info(err);
+                    }
+                    err = loop.graphicUpdater.add("PLAY", pixelAnim, "pixelAnim");
+                    if (err != null) {
+                        console.error(err);
+                    }
+                });
 
                 fpsSelector.addEventListener("keypress", function(e) {
                     if (e.charCode == 13) {

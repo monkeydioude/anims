@@ -53,3 +53,17 @@ Updater.prototype.add = function(mode, cb, name) {
 
     return null;
 }
+
+Updater.prototype.remove = function(mode, name) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return "Could not remove element, mode " + mode + " does not exist";
+    }
+
+    if (!this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not remove element, name " + name + " does not exist";
+    }
+
+    delete this.nodes[mode][name];
+
+    return null;
+}
