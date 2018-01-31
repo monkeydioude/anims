@@ -13,6 +13,9 @@
             #board {
                 background-color: #eee;
             }
+            #buffer {
+                border: 1px dotted purple;
+            }
             </style>
     </head>
     <body>
@@ -32,8 +35,8 @@
         <button data-action="stop-animation">Stop</button>
         <button data-action="reload-animation">Reload</button>
         <br />
-        <canvas id="board" width="60" height="60"></canvas>
-        <canvas id="buffer" width="60" height="60"></canvas>
+        <canvas id="board" width="300" height="300"></canvas>
+        <canvas id="buffer" width="300" height="300"></canvas>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", function() {
@@ -48,14 +51,13 @@
                         cT: 0
                     };
 
-                    devEngine.drawImageData(new ImageData(60, 60), 60, 60);
 
                     var pixelAnim = function(T, engine) {
                         if (dummyLock) {
                             return;
                         }
-                        if (imgDataDummy || 1) {
-                            
+                        if (imgDataDummy) {
+                            engine.drawImageData(imgDataDummy, 0, 0, engine.boardW(), engine.boardH())
                         }
                         dummyLock = true;
                         var m = [6, 6],
@@ -78,9 +80,10 @@
                         for (var x = 0; x < m[0]; x++) {
                             for (var y = 0; y < m[1]; y++) {
                                 (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(engine);
+                                (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(devEngine);
                             }
                         }
-                        imgDataDummy = engine.c.getImageData(0, 0, engine.boardW(), engine.boardH());
+                        imgDataDummy = engine.captureImageData();
                     }
 
                     loop.setMode("PLAY");
@@ -93,6 +96,7 @@
 
                     loop.graphicUpdater.add("PLAY", function(T, engine) {
                        engine.clearCanvas();
+                       devEngine.clearCanvas();
                     });
 
                     err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
