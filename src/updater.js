@@ -15,13 +15,20 @@ Updater.prototype.update = function(mode, T, engine) {
     if (!this.nodes.hasOwnProperty(mode)) {
         return ;
     }
-    var n = this.nodes[mode];
+    var n = this.nodes[mode],
+        updIt = 0,
+        updSt = 0;
 
     for (var i in n) {
-        if (n[i](T, engine) == -1) {
+        updSt = n[i](T, engine);
+        if (updSt == -1) {
             delete n[i];
+            continue;
         }
+        updIt += updSt;
     }
+    
+    return updIt;
 }
 
 /**

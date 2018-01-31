@@ -1,5 +1,6 @@
 <html>
     <head>
+        <script type="text/javascript" src="../src/canvas.js"></script>
         <script type="text/javascript" src="../src/cycle.js"></script>
         <script type="text/javascript" src="../src/engine.js"></script>
         <script type="text/javascript" src="../src/render/color.js"></script>
@@ -15,7 +16,10 @@
                 background-color: #eee;
             }
             #buffer {
-                border: 1px dotted purple;
+                display: none;
+            }
+            #debug {
+                border: 1px dotted purple;                
             }
             </style>
     </head>
@@ -35,15 +39,17 @@
         <button data-action="clear-canvas">Clear</button>
         <button data-action="stop-animation">Stop</button>
         <button data-action="reload-animation">Reload</button>
+        <button data-action="toggle-debug">Toggle Debug</button>
         <br />
         <canvas id="board" width="300" height="300"></canvas>
+        <canvas id="debug" width="300" height="300"></canvas>
         <canvas id="buffer" width="300" height="300"></canvas>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", function() {
                 var initialFPS = 30,
-                    engine = new Engine(document.querySelector("#board")),
-                    devEngine = new Engine(document.querySelector('#buffer')),
+                    engine = new Engine(document.querySelector("#board"), document.querySelector('#buffer')),
+                    debug = new Canvas(document.querySelector("#debug")),
                     loop = new Loop(initialFPS, engine),
                     logger = new Logger("info", false),
                     err = null,
@@ -63,32 +69,33 @@
 
                     var pixelAnim = function(T, engine) {
                         if (dummyLock) {
-                            return;
+                            return  ;
                         }
                         if (imgDataDummy) {
-                            engine.drawImageData(imgDataDummy, 0, 0, engine.boardW(), engine.boardH())
+                            engine.drawImageData(imgDataDummy)
                         }
                         dummyLock = true;
                         var m = [6, 6],
-                            sX = (Math.random() * engine.boardH()) << 0,
-                            sY = (Math.random() * engine.boardW()) << 0,
+                            sX = (Math.random() * engine.height()) << 0,
+                            sY = (Math.random() * engine.width()) << 0,
                             r = (Math.random() * 255) << 0,
                             g = (Math.random() * 255) << 0,
                             b = (Math.random() * 255) << 0,
                             a = Math.random();
 
-                        if (sX > (engine.boardW() - m[0])) {
-                            sX = engine.boardW() - m[0];
+                        if (sX > (engine.width() - m[0])) {
+                            sX = engine.width() - m[0];
                         }
                         
-                        if (sY > (engine.boardH() - m[1])) {
-                            sY = engine.boardH() - m[1];
+                        if (sY > (engine.height() - m[1])) {
+                            sY = engine.height() - m[1];
                         }
 
                         (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(engine);
-                        (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(devEngine);
 
-                        imgDataDummy = engine.captureImageData();
+                        imgDataDummy = engine.snapshot();
+                        debug.drawImageData(imgDataDummy);
+                        return 1;
                         // return -1;
                     }
 
@@ -99,11 +106,6 @@
                         .onDocumentVisible(loop.start.bind(loop))
                         .onBlur(function(){document.querySelector('[data-display="crap"]').innerHTML = '(╯°□°）╯︵ ┻━┻';})
                         .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
-
-                    loop.graphicUpdater.add("PLAY", function(T, engine) {
-                       engine.clearCanvas();
-                       devEngine.clearCanvas();
-                    });
 
                     err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
                     if (err != null) {
@@ -150,7 +152,10 @@
                 document.querySelector("[data-action='loop-start']").addEventListener("click", loop.start.bind(loop));
                 document.querySelector("[data-action='loop-pause']").addEventListener("click", loop.pause.bind(loop));
                 document.querySelector("[data-action='hide-logs']").addEventListener("click", logger.toggleLogs.bind(logger));
-                document.querySelector("[data-action='clear-canvas']").addEventListener("click", engine.clearCanvas.bind(engine));
+                document.querySelector("[data-action='clear-canvas']").addEventListener("click", function() {
+                    engine.clear();
+                    imgDataDummy = null;
+                });
                 document.querySelector("[data-action='stop-animation']").addEventListener("click", function(){
                     err = loop.graphicUpdater.remove("PLAY", "pixelAnim");
                     if (err != null) {
@@ -166,6 +171,14 @@
                     if (err != null) {
                         console.error(err);
                     }
+                });
+
+                document.querySelector("[data-action='toggle-debug']").addEventListener("click", function() {
+                    if (debug.canvas.style.visibility == "visible" || debug.canvas.style.visibility == "") {
+                        debug.canvas.style.visibility = "hidden";
+                        return;
+                    }
+                    debug.canvas.style.visibility = "visible";
                 });
 
                 fpsSelector.addEventListener("keypress", function(e) {

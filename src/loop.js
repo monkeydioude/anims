@@ -65,8 +65,13 @@ Loop.prototype.process = function(T) {
  * @param {*} T 
  */
 Loop.prototype.display = function(T) {
-    var nT = window.performance.now();
+    var nT = window.performance.now(),
+        updStatus = 0;
 
-    this.graphicUpdater.update(this.mode, T, this.engine);
+    updStatus = this.graphicUpdater.update(this.mode, T, this.engine);
+    
+    if (updStatus > 0) {
+        this.engine.render();
+    }
     this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
