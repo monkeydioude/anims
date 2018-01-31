@@ -4,6 +4,7 @@
         <script type="text/javascript" src="../src/engine.js"></script>
         <script type="text/javascript" src="../src/render/color.js"></script>
         <script type="text/javascript" src="../src/render/pixel.js"></script>
+        <script type="text/javascript" src="../src/render/stack.js"></script>
         <script type="text/javascript" src="../src/anims/inquisition.js"></script>
         <script type="text/javascript" src="../src/updater.js"></script>
         <script type="text/javascript" src="../src/browser.js"></script>
@@ -49,7 +50,15 @@
                     shittyFps = {
                         m: 0,
                         cT: 0
-                    };
+                    },
+                    matrix = [
+                        [0, 1, 1, 1, 1, 0],
+                        [1, 0, 0, 0, 0, 1],
+                        [1, 0, 1, 1, 0, 1],
+                        [1, 0, 1, 1, 0, 1],
+                        [1, 0, 0, 0, 0, 1],
+                        [0, 1, 1, 1, 1, 0]
+                    ];
 
 
                     var pixelAnim = function(T, engine) {
@@ -76,14 +85,11 @@
                             sY = engine.boardH() - m[1];
                         }
 
+                        (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(engine);
+                        (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(devEngine);
 
-                        for (var x = 0; x < m[0]; x++) {
-                            for (var y = 0; y < m[1]; y++) {
-                                (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(engine);
-                                (new Pixel(sX + x, sY + y, new Color(r, g, b, a))).render(devEngine);
-                            }
-                        }
                         imgDataDummy = engine.captureImageData();
+                        // return -1;
                     }
 
                     loop.setMode("PLAY");
