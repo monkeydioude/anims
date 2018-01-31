@@ -11,14 +11,14 @@ var Updater = function(name) {
  * 
  * @param {int} T 
  */
-Updater.prototype.update = function(mode, data) {
+Updater.prototype.update = function(mode, T, engine) {
     if (!this.nodes.hasOwnProperty(mode)) {
         return ;
     }
     var n = this.nodes[mode];
 
     for (var i in n) {
-        if (n[i](data) == -1) {
+        if (n[i](T, engine) == -1) {
             delete n[i];
         }
     }
@@ -50,6 +50,20 @@ Updater.prototype.add = function(mode, cb, name) {
     }
 
     this.nodes[mode][name] = cb;
+
+    return null;
+}
+
+Updater.prototype.remove = function(mode, name) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return "Could not remove element, mode " + mode + " does not exist";
+    }
+
+    if (!this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not remove element, name " + name + " does not exist";
+    }
+
+    delete this.nodes[mode][name];
 
     return null;
 }
