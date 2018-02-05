@@ -1,3 +1,5 @@
+var Updater = require('./updater');
+
 var Loop = function(fps, engine, startingMode)
 {
     if (!fps) {
@@ -75,3 +77,5 @@ Loop.prototype.display = function(T) {
     }
     this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
+
+module.exports = Loop;

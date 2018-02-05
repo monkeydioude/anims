@@ -16,3 +16,5 @@ Cycle.prototype.update = function(T, cbAction)
         this.cT -= this.miF;
     }
 }
+
+module.exports = Cycle;

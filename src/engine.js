@@ -1,3 +1,5 @@
+var Canvas = require('./canvas');
+
 var Engine = function(scene, buffer) {
     this.scene = new Canvas(scene);
     this.buffer = new Canvas(buffer);
@@ -72,3 +74,5 @@ Engine.prototype.render = function() {
 Engine.prototype.snapshot = function() {
     return this.buffer.snapshot();
 }
+
+module.exports = Engine;

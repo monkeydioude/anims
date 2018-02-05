@@ -74,3 +74,5 @@ Updater.prototype.remove = function(mode, name) {
 
     return null;
 }
+
+module.exports = Updater;

@@ -12,3 +12,5 @@ Inquisition.prototype.update = function(T)
     return this.updateCycle.update(T, function(T) {
     }.bind(this));
 }
+
+module.exports = Inquisition;

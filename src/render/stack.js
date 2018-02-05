@@ -1,3 +1,5 @@
+var Pixel = require('./pixel');
+
 var Stack = function(x, y, color, m) {
     this.x = x;
     this.y = y;
@@ -46,3 +48,5 @@ Stack.prototype.computeMatrix = function(m) {
         console.log(error);
     }
 }
+
+module.exports = Stack;

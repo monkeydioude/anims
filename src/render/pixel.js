@@ -7,3 +7,5 @@ var Pixel = function(x, y, color) {
 Pixel.prototype.render = function(engine) {
     engine.draw(this.x, this.y, 1, 1, this.color);
 }
+
+module.exports = Pixel;

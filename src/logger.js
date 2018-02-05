@@ -23,3 +23,5 @@ Logger.prototype.toggleLogs = function() {
     console[this.type]("Setting logs from", this.shouldDisplayLogs, "to", !this.shouldDisplayLogs);
     this.shouldDisplayLogs = !this.shouldDisplayLogs;
 }
+
+module.exports = Logger;

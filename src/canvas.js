@@ -50,3 +50,5 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  Canvas.prototype.snapshot = function() {
      return this.c.getImageData(0, 0, this.width(), this.height());
  }
+
+ module.exports = Canvas;

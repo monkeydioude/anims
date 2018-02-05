@@ -49,3 +49,5 @@ Browser.prototype.onDocumentVisible = function(cb)
     this.documentVisibility.visible.push(cb);
     return this;    
 }
+
+module.exports = Browser;
