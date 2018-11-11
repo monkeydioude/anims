@@ -126,7 +126,7 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Engine = __webpack_require__(2),
+var Graphic = __webpack_require__(12),
     Canvas = __webpack_require__(0),
     Loop = __webpack_require__(3),
     Logger = __webpack_require__(5),
@@ -136,9 +136,9 @@ var Engine = __webpack_require__(2),
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
-        engine = new Engine(document.querySelector("#board"), document.querySelector('#buffer')),
+        graphic = new Graphic(document.querySelector("#board"), document.querySelector('#buffer')),
         debug = new Canvas(document.querySelector("#debug")),
-        loop = new Loop(initialFPS, engine),
+        loop = new Loop(initialFPS, graphic),
         logger = new Logger("info", false),
         err = null,
         shittyFps = {
@@ -160,28 +160,28 @@ document.addEventListener("DOMContentLoaded", function() {
                 return  ;
             }
             if (imgDataDummy) {
-                engine.drawImageData(imgDataDummy)
+                graphic.drawImageData(imgDataDummy)
             }
             dummyLock = true;
             var m = [6, 6],
-                sX = (Math.random() * engine.height()) << 0,
-                sY = (Math.random() * engine.width()) << 0,
+                sX = (Math.random() * graphic.height()) << 0,
+                sY = (Math.random() * graphic.width()) << 0,
                 r = (Math.random() * 255) << 0,
                 g = (Math.random() * 255) << 0,
                 b = (Math.random() * 255) << 0,
                 a = Math.random();
 
-            if (sX > (engine.width() - m[0])) {
-                sX = engine.width() - m[0];
+            if (sX > (graphic.width() - m[0])) {
+                sX = graphic.width() - m[0];
             }
             
-            if (sY > (engine.height() - m[1])) {
-                sY = engine.height() - m[1];
+            if (sY > (graphic.height() - m[1])) {
+                sY = graphic.height() - m[1];
             }
 
             (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(engine);
 
-            imgDataDummy = engine.snapshot();
+            imgDataDummy = graphic.snapshot();
             debug.drawImageData(imgDataDummy);
             return 1;
             // return -1;
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
         
-        err = loop.graphicUpdater.add("PLAY", pixelAnim, "pixelAnim");
+        err = loop.displayUpdater.add("PLAY", pixelAnim, "pixelAnim");
         if (err != null) {
             console.error(err);
         }
@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.querySelector("[data-action='loop-pause']").addEventListener("click", loop.pause.bind(loop));
     document.querySelector("[data-action='hide-logs']").addEventListener("click", logger.toggleLogs.bind(logger));
     document.querySelector("[data-action='clear-canvas']").addEventListener("click", function() {
-        engine.clear();
+        graphic.clear();
         imgDataDummy = null;
     });
     document.querySelector("[data-action='stop-animation']").addEventListener("click", function(){
@@ -278,89 +278,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Canvas = __webpack_require__(0);
-
-var Engine = function(scene, buffer) {
-    this.scene = new Canvas(scene);
-    this.buffer = new Canvas(buffer);
-    this.snap = null;
-}
-
-/**
- * Draw a rectangle
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} color 
- */
-Engine.prototype.draw = function(x, y, w, h, color) {
-   this.buffer.draw(x, y, w, h, color);
-}
-
-/**
- * Draw ImageData element onto engine's canvas
- * @param {*} imgData 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} dx 
- * @param {*} dy 
- */
-Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
-    this.buffer.drawImageData(imgData, x, y, dx, dy, w, h);
-}
-
-/**
- * Width of the engine's canvas
- * @return int
- */
-Engine.prototype.width = function() {
-    return this.scene.width();
-}
-
-/**
- * Height of the engine's canvas
- * @return int
- */
-Engine.prototype.height = function() {
-    return this.scene.height();
-}
-
-/**
- * Return the ImageData version of the whole engine's canvas
- * @return ImageData
- */
-Engine.prototype.captureScene = function() {
-    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
-}
-
-Engine.prototype.clear = function() {
-    this.scene.clear();
-    this.buffer.clear();
-}
-
-Engine.prototype.render = function() {
-    // this.scene.clear();
-    this.scene.drawImageData(
-        this.buffer.c.getImageData(
-            0, 0, this.buffer.width(), this.buffer.height()
-        )
-    );
-    this.buffer.clear();
-}
-
-Engine.prototype.snapshot = function() {
-    return this.buffer.snapshot();
-}
-
-module.exports = Engine;
-
-/***/ }),
+/* 2 */,
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -380,7 +298,7 @@ var Loop = function(fps, engine, startingMode)
     this.setFrequencies(fps);
     this.engine = engine;
     this.dataUpdater = new Updater("data");
-    this.graphicUpdater = new Updater("graphic");
+    this.displayUpdater = new Updater("graphic");
     this.mode = startingMode;
 };
 
@@ -400,8 +318,8 @@ Loop.prototype.pause = function() {
 
 Loop.prototype.start = function() {
     console.info("started");
-    setTimeout(function(){this.process(0);}.bind(this), 0);
-    setTimeout(function(){this.display(0);}.bind(this), 0);
+    setTimeout(function(){this.dataLoop(0);}.bind(this), 0);
+    setTimeout(function(){this.displayLoop(0);}.bind(this), 0);
 }
 
 /**
@@ -421,27 +339,27 @@ Loop.prototype.setFrequencies = function(fps) {
  * 
  * @param {*} T 
  */
-Loop.prototype.process = function(T) {
+Loop.prototype.dataLoop = function(T) {
     var nT = window.performance.now();
 
     this.dataUpdater.update(this.mode, T);
-    this.cbSeed = setTimeout(function(){this.process(this.miF);}.bind(this), T - (window.performance.now() - nT));
+    this.cbSeed = setTimeout(function(){this.dataLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
 
 /**
  * 
  * @param {*} T 
  */
-Loop.prototype.display = function(T) {
+Loop.prototype.displayLoop = function(T) {
     var nT = window.performance.now(),
         updStatus = 0;
 
-    updStatus = this.graphicUpdater.update(this.mode, T, this.engine);
+    updStatus = this.displayUpdater.update(this.mode, T, this.engine);
     
     if (updStatus > 0) {
         this.engine.render();
     }
-    this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now() - nT));
+    this.dSeed = setTimeout(function(){this.displayLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
 
 module.exports = Loop;
@@ -711,6 +629,91 @@ Color.prototype.RGBA = function() {
 }
 
 module.exports = Color;
+
+/***/ }),
+/* 10 */,
+/* 11 */,
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Canvas = __webpack_require__(0);
+
+var Engine = function(scene, buffer) {
+    this.scene = new Canvas(scene);
+    this.buffer = new Canvas(buffer);
+    this.snap = null;
+}
+
+/**
+ * Draw a rectangle
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} color 
+ */
+Engine.prototype.draw = function(x, y, w, h, color) {
+   this.buffer.draw(x, y, w, h, color);
+}
+
+/**
+ * Draw ImageData element onto engine's canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
+Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+    this.buffer.drawImageData(imgData, x, y, dx, dy, w, h);
+}
+
+/**
+ * Width of the engine's canvas
+ * @return int
+ */
+Engine.prototype.width = function() {
+    return this.scene.width();
+}
+
+/**
+ * Height of the engine's canvas
+ * @return int
+ */
+Engine.prototype.height = function() {
+    return this.scene.height();
+}
+
+/**
+ * Return the ImageData version of the whole engine's canvas
+ * @return ImageData
+ */
+Engine.prototype.captureScene = function() {
+    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
+}
+
+Engine.prototype.clear = function() {
+    this.scene.clear();
+    this.buffer.clear();
+}
+
+Engine.prototype.render = function() {
+    // this.scene.clear();
+    this.scene.drawImageData(
+        this.buffer.c.getImageData(
+            0, 0, this.buffer.width(), this.buffer.height()
+        )
+    );
+    this.buffer.clear();
+}
+
+Engine.prototype.snapshot = function() {
+    return this.buffer.snapshot();
+}
+
+module.exports = Engine;
 
 /***/ })
 /******/ ]);

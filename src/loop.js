@@ -14,7 +14,7 @@ var Loop = function(fps, engine, startingMode)
     this.setFrequencies(fps);
     this.engine = engine;
     this.dataUpdater = new Updater("data");
-    this.graphicUpdater = new Updater("graphic");
+    this.displayUpdater = new Updater("graphic");
     this.mode = startingMode;
 };
 
@@ -34,8 +34,8 @@ Loop.prototype.pause = function() {
 
 Loop.prototype.start = function() {
     console.info("started");
-    setTimeout(function(){this.process(0);}.bind(this), 0);
-    setTimeout(function(){this.display(0);}.bind(this), 0);
+    setTimeout(function(){this.dataLoop(0);}.bind(this), 0);
+    setTimeout(function(){this.displayLoop(0);}.bind(this), 0);
 }
 
 /**
@@ -55,27 +55,27 @@ Loop.prototype.setFrequencies = function(fps) {
  * 
  * @param {*} T 
  */
-Loop.prototype.process = function(T) {
+Loop.prototype.dataLoop = function(T) {
     var nT = window.performance.now();
 
     this.dataUpdater.update(this.mode, T);
-    this.cbSeed = setTimeout(function(){this.process(this.miF);}.bind(this), T - (window.performance.now() - nT));
+    this.cbSeed = setTimeout(function(){this.dataLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
 
 /**
  * 
  * @param {*} T 
  */
-Loop.prototype.display = function(T) {
+Loop.prototype.displayLoop = function(T) {
     var nT = window.performance.now(),
         updStatus = 0;
 
-    updStatus = this.graphicUpdater.update(this.mode, T, this.engine);
+    updStatus = this.displayUpdater.update(this.mode, T, this.engine);
     
     if (updStatus > 0) {
         this.engine.render();
     }
-    this.dSeed = setTimeout(function(){this.display(this.miF);}.bind(this), T - (window.performance.now() - nT));
+    this.dSeed = setTimeout(function(){this.displayLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
 
 module.exports = Loop;
