@@ -36,6 +36,15 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
     this.c.fillRect(x, y, w, h);
  }
 
+ Canvas.prototype.drawImage = function(img, x, y, w, h) {
+    if (!x) x = 0;
+    if (!y) y = 0;
+    if (!w) w = this.width();
+    if (!h) h = this.height();
+
+    this.c.drawImage(img, x, y, w, h);
+ }
+
  Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     if (!x) x = 0;
     if (!y) y = 0;

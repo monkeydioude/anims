@@ -1,4 +1,4 @@
-var Graphic = require('../src/graphic'),
+var Graphic = require('../src/graphic/drawer'),
     Canvas = require('../src/canvas'),
     Loop = require('../src/loop'),
     Logger = require('../src/logger'),
@@ -8,7 +8,10 @@ var Graphic = require('../src/graphic'),
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
-        graphic = new Graphic(document.querySelector("#board"), document.querySelector('#buffer')),
+        graphic = new Graphic(
+            new Canvas(document.querySelector("#board")),
+            new Canvas(document.querySelector('#buffer'))
+        ),
         debug = new Canvas(document.querySelector("#debug")),
         loop = new Loop(initialFPS, graphic),
         logger = new Logger("info", false),
@@ -32,35 +35,66 @@ document.addEventListener("DOMContentLoaded", function() {
                 return  ;
             }
             if (imgDataDummy) {
-                graphic.drawImageData(imgDataDummy)
+                engine.drawImageData(imgDataDummy)
             }
             dummyLock = true;
             var m = [6, 6],
-                sX = (Math.random() * graphic.height()) << 0,
-                sY = (Math.random() * graphic.width()) << 0,
+                sX = (Math.random() * engine.height()) << 0,
+                sY = (Math.random() * engine.width()) << 0,
                 r = (Math.random() * 255) << 0,
                 g = (Math.random() * 255) << 0,
                 b = (Math.random() * 255) << 0,
                 a = Math.random();
 
-            if (sX > (graphic.width() - m[0])) {
-                sX = graphic.width() - m[0];
+            if (sX > (engine.width() - m[0])) {
+                sX = engine.width() - m[0];
             }
             
-            if (sY > (graphic.height() - m[1])) {
-                sY = graphic.height() - m[1];
+            if (sY > (engine.height() - m[1])) {
+                sY = engine.height() - m[1];
             }
 
             (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(engine);
 
-            imgDataDummy = graphic.snapshot();
+            imgDataDummy = engine.snapshot();
             debug.drawImageData(imgDataDummy);
             return 1;
             // return -1;
         }
+        
+        err = loop.displayUpdater.add("PLAY", pixelAnim, "pixelAnim");
+        if (err != null) {
+            console.error(err);
+        }
+
+        var pauseDisplay = function(T, engine) {
+            if (imgDataDummy) {
+                engine.drawImageData(imgDataDummy)
+            }
+            engine.draw(0, 0, engine.width(), engine.height(), new Color(75, 200, 125, 0.2));
+            return 1;
+        }
+
+        err = loop.displayUpdater.add("PAUSE", pauseDisplay, "pauseDisplay");
+        if (err != null) {
+            console.error(err);
+        }
 
         loop.setMode("PLAY");
 
+        setTimeout(function(){
+            loop.setMode("PAUSE")
+            setInterval(function(){
+                loop.setMode("PAUSE")
+            }, 6000)
+        }, 3000);
+
+        setTimeout(function(){
+            loop.setMode("PLAY")
+            setInterval(function(){
+                loop.setMode("PLAY")
+            }, 6000)
+        }, 6000);
         (new Browser())
             .onDocumentHidden(loop.pause.bind(loop))
             .onDocumentVisible(loop.start.bind(loop))
@@ -100,11 +134,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 dummyT = 0
             }
         });
-        
-        err = loop.displayUpdater.add("PLAY", pixelAnim, "pixelAnim");
-        if (err != null) {
-            console.error(err);
-        }
 
     /* ======= */
     var fpsSelector = document.querySelector("[data-action='set-fps']");

@@ -22,7 +22,7 @@ var Loop = function(fps, engine, startingMode)
  * @param {*} mode 
  */
 Loop.prototype.setMode = function(mode) {
-    console.info("Seeting mode from", this.mode, "to", mode);
+    console.info("Setting mode from", this.mode, "to", mode);
     this.mode = mode;
 }
 

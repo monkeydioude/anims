@@ -1,8 +1,6 @@
-var Canvas = require('./canvas');
-
-var Engine = function(scene, buffer) {
-    this.scene = new Canvas(scene);
-    this.buffer = new Canvas(buffer);
+var Engine = function(sceneCanvas, bufferCanvas) {
+    this.scene = sceneCanvas;
+    this.buffer = bufferCanvas;
     this.snap = null;
 }
 
@@ -28,8 +26,9 @@ Engine.prototype.draw = function(x, y, w, h, color) {
  * @param {*} dx 
  * @param {*} dy 
  */
-Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
-    this.buffer.drawImageData(imgData, x, y, dx, dy, w, h);
+
+Engine.prototype.drawImage = function(image, x, y, w, h) {
+    this.buffer.drawImage(image, x, y, w, h);
 }
 
 /**

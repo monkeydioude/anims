@@ -60,11 +60,93 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+var Engine = function(sceneCanvas, bufferCanvas) {
+    this.scene = sceneCanvas;
+    this.buffer = bufferCanvas;
+    this.snap = null;
+}
+
+/**
+ * Draw a rectangle
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} color 
+ */
+Engine.prototype.draw = function(x, y, w, h, color) {
+   this.buffer.draw(x, y, w, h, color);
+}
+
+/**
+ * Draw ImageData element onto engine's canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
+
+Engine.prototype.drawImage = function(image, x, y, w, h) {
+    this.buffer.drawImage(image, x, y, w, h);
+}
+
+/**
+ * Width of the engine's canvas
+ * @return int
+ */
+Engine.prototype.width = function() {
+    return this.scene.width();
+}
+
+/**
+ * Height of the engine's canvas
+ * @return int
+ */
+Engine.prototype.height = function() {
+    return this.scene.height();
+}
+
+/**
+ * Return the ImageData version of the whole engine's canvas
+ * @return ImageData
+ */
+Engine.prototype.captureScene = function() {
+    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
+}
+
+Engine.prototype.clear = function() {
+    this.scene.clear();
+    this.buffer.clear();
+}
+
+Engine.prototype.render = function() {
+    // this.scene.clear();
+    this.scene.drawImageData(
+        this.buffer.c.getImageData(
+            0, 0, this.buffer.width(), this.buffer.height()
+        )
+    );
+    this.buffer.clear();
+}
+
+Engine.prototype.snapshot = function() {
+    return this.buffer.snapshot();
+}
+
+module.exports = Engine;
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports) {
 
 var Canvas = function(canvas) {
@@ -105,6 +187,15 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
     this.c.fillRect(x, y, w, h);
  }
 
+ Canvas.prototype.drawImage = function(img, x, y, w, h) {
+    if (!x) x = 0;
+    if (!y) y = 0;
+    if (!w) w = this.width();
+    if (!h) h = this.height();
+
+    this.c.drawImage(img, x, y, w, h);
+ }
+
  Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     if (!x) x = 0;
     if (!y) y = 0;
@@ -123,166 +214,10 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  module.exports = Canvas;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Graphic = __webpack_require__(12),
-    Canvas = __webpack_require__(0),
-    Loop = __webpack_require__(3),
-    Logger = __webpack_require__(5),
-    Browser = __webpack_require__(6),
-    Stack = __webpack_require__(7),
-    Color = __webpack_require__(9);
-
-document.addEventListener("DOMContentLoaded", function() {
-    var initialFPS = 30,
-        graphic = new Graphic(document.querySelector("#board"), document.querySelector('#buffer')),
-        debug = new Canvas(document.querySelector("#debug")),
-        loop = new Loop(initialFPS, graphic),
-        logger = new Logger("info", false),
-        err = null,
-        shittyFps = {
-            m: 0,
-            cT: 0
-        },
-        matrix = [
-            [0, 1, 1, 1, 1, 0],
-            [1, 0, 0, 0, 0, 1],
-            [1, 0, 1, 1, 0, 1],
-            [1, 0, 1, 1, 0, 1],
-            [1, 0, 0, 0, 0, 1],
-            [0, 1, 1, 1, 1, 0]
-        ];
-
-
-        var pixelAnim = function(T, engine) {
-            if (dummyLock) {
-                return  ;
-            }
-            if (imgDataDummy) {
-                graphic.drawImageData(imgDataDummy)
-            }
-            dummyLock = true;
-            var m = [6, 6],
-                sX = (Math.random() * graphic.height()) << 0,
-                sY = (Math.random() * graphic.width()) << 0,
-                r = (Math.random() * 255) << 0,
-                g = (Math.random() * 255) << 0,
-                b = (Math.random() * 255) << 0,
-                a = Math.random();
-
-            if (sX > (graphic.width() - m[0])) {
-                sX = graphic.width() - m[0];
-            }
-            
-            if (sY > (graphic.height() - m[1])) {
-                sY = graphic.height() - m[1];
-            }
-
-            (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(engine);
-
-            imgDataDummy = graphic.snapshot();
-            debug.drawImageData(imgDataDummy);
-            return 1;
-            // return -1;
-        }
-
-        loop.setMode("PLAY");
-
-        (new Browser())
-            .onDocumentHidden(loop.pause.bind(loop))
-            .onDocumentVisible(loop.start.bind(loop))
-            .onBlur(function(){document.querySelector('[data-display="crap"]').innerHTML = '(╯°□°）╯︵ ┻━┻';})
-            .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
-
-        err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
-        if (err != null) {
-            console.error(err);
-        }
-
-        err = loop.dataUpdater.add("PLAY", function(T) {
-            shittyFps.cT += T;
-            shittyFps.m++;
-            document.querySelector("#T").innerHTML = T.toFixed(4);
-
-            if (shittyFps.cT >= 100) {
-                document.querySelector("#fps").innerHTML = ((shittyFps.m / shittyFps.cT) * 1000).toFixed(4);
-                shittyFps = {
-                    m: 0,
-                    cT: 0
-                };
-            }
-        });
-        if (err != null) {
-            console.error(err);
-        }
-
-        var dummyT = 0,
-            dummyLock = true,
-            imgDataDummy = null;
-
-        loop.dataUpdater.add("PLAY", function(T) {
-            dummyT += T;
-            if (dummyT >= 0) {
-                dummyLock = false;
-                dummyT = 0
-            }
-        });
-        
-        err = loop.displayUpdater.add("PLAY", pixelAnim, "pixelAnim");
-        if (err != null) {
-            console.error(err);
-        }
-
-    /* ======= */
-    var fpsSelector = document.querySelector("[data-action='set-fps']");
-
-    document.querySelector("[data-action='loop-start']").addEventListener("click", loop.start.bind(loop));
-    document.querySelector("[data-action='loop-pause']").addEventListener("click", loop.pause.bind(loop));
-    document.querySelector("[data-action='hide-logs']").addEventListener("click", logger.toggleLogs.bind(logger));
-    document.querySelector("[data-action='clear-canvas']").addEventListener("click", function() {
-        graphic.clear();
-        imgDataDummy = null;
-    });
-    document.querySelector("[data-action='stop-animation']").addEventListener("click", function(){
-        err = loop.graphicUpdater.remove("PLAY", "pixelAnim");
-        if (err != null) {
-            console.info(err);
-        }
-    });
-    document.querySelector("[data-action='reload-animation']").addEventListener("click", function(){
-        err = loop.graphicUpdater.remove("PLAY", "pixelAnim");
-        if (err != null) {
-            console.info(err);
-        }
-        err = loop.graphicUpdater.add("PLAY", pixelAnim, "pixelAnim");
-        if (err != null) {
-            console.error(err);
-        }
-    });
-
-    document.querySelector("[data-action='toggle-debug']").addEventListener("click", function() {
-        if (debug.canvas.style.visibility == "visible" || debug.canvas.style.visibility == "") {
-            debug.canvas.style.visibility = "hidden";
-            return;
-        }
-        debug.canvas.style.visibility = "visible";
-    });
-
-    fpsSelector.addEventListener("keypress", function(e) {
-        if (e.charCode == 13) {
-            loop.setFrequencies(parseInt(e.target.value));
-        }
-    });
-    fpsSelector.value = initialFPS;
-});
-
-/***/ }),
-/* 2 */,
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Updater = __webpack_require__(4);
+var Updater = __webpack_require__(3);
 
 var Loop = function(fps, engine, startingMode)
 {
@@ -306,7 +241,7 @@ var Loop = function(fps, engine, startingMode)
  * @param {*} mode 
  */
 Loop.prototype.setMode = function(mode) {
-    console.info("Seeting mode from", this.mode, "to", mode);
+    console.info("Setting mode from", this.mode, "to", mode);
     this.mode = mode;
 }
 
@@ -365,7 +300,7 @@ Loop.prototype.displayLoop = function(T) {
 module.exports = Loop;
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports) {
 
 var Updater = function(name) {
@@ -446,6 +381,190 @@ Updater.prototype.remove = function(mode, name) {
 }
 
 module.exports = Updater;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Graphic = __webpack_require__(0),
+    Canvas = __webpack_require__(1),
+    Loop = __webpack_require__(2),
+    Logger = __webpack_require__(5),
+    Browser = __webpack_require__(6),
+    Stack = __webpack_require__(7),
+    Color = __webpack_require__(9);
+
+document.addEventListener("DOMContentLoaded", function() {
+    var initialFPS = 30,
+        graphic = new Graphic(
+            new Canvas(document.querySelector("#board")),
+            new Canvas(document.querySelector('#buffer'))
+        ),
+        debug = new Canvas(document.querySelector("#debug")),
+        loop = new Loop(initialFPS, graphic),
+        logger = new Logger("info", false),
+        err = null,
+        shittyFps = {
+            m: 0,
+            cT: 0
+        },
+        matrix = [
+            [0, 1, 1, 1, 1, 0],
+            [1, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 0, 1],
+            [1, 0, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 1],
+            [0, 1, 1, 1, 1, 0]
+        ];
+
+
+        var pixelAnim = function(T, engine) {
+            if (dummyLock) {
+                return  ;
+            }
+            if (imgDataDummy) {
+                engine.drawImageData(imgDataDummy)
+            }
+            dummyLock = true;
+            var m = [6, 6],
+                sX = (Math.random() * engine.height()) << 0,
+                sY = (Math.random() * engine.width()) << 0,
+                r = (Math.random() * 255) << 0,
+                g = (Math.random() * 255) << 0,
+                b = (Math.random() * 255) << 0,
+                a = Math.random();
+
+            if (sX > (engine.width() - m[0])) {
+                sX = engine.width() - m[0];
+            }
+            
+            if (sY > (engine.height() - m[1])) {
+                sY = engine.height() - m[1];
+            }
+
+            (new Stack(sX, sY, new Color(r, g, b, a), matrix)).render(engine);
+
+            imgDataDummy = engine.snapshot();
+            debug.drawImageData(imgDataDummy);
+            return 1;
+            // return -1;
+        }
+        
+        err = loop.displayUpdater.add("PLAY", pixelAnim, "pixelAnim");
+        if (err != null) {
+            console.error(err);
+        }
+
+        var pauseDisplay = function(T, engine) {
+            if (imgDataDummy) {
+                engine.drawImageData(imgDataDummy)
+            }
+            engine.draw(0, 0, engine.width(), engine.height(), new Color(75, 200, 125, 0.2));
+            return 1;
+        }
+
+        err = loop.displayUpdater.add("PAUSE", pauseDisplay, "pauseDisplay");
+        if (err != null) {
+            console.error(err);
+        }
+
+        loop.setMode("PLAY");
+
+        setTimeout(function(){
+            loop.setMode("PAUSE")
+            setInterval(function(){
+                loop.setMode("PAUSE")
+            }, 6000)
+        }, 3000);
+
+        setTimeout(function(){
+            loop.setMode("PLAY")
+            setInterval(function(){
+                loop.setMode("PLAY")
+            }, 6000)
+        }, 6000);
+        (new Browser())
+            .onDocumentHidden(loop.pause.bind(loop))
+            .onDocumentVisible(loop.start.bind(loop))
+            .onBlur(function(){document.querySelector('[data-display="crap"]').innerHTML = '(╯°□°）╯︵ ┻━┻';})
+            .onFocus(function(){document.querySelector('[data-display="crap"]').innerHTML = '┬─┬ノ( º _ ºノ)';});
+
+        err = loop.dataUpdater.add("PLAY", logger.log.bind(logger));
+        if (err != null) {
+            console.error(err);
+        }
+
+        err = loop.dataUpdater.add("PLAY", function(T) {
+            shittyFps.cT += T;
+            shittyFps.m++;
+            document.querySelector("#T").innerHTML = T.toFixed(4);
+
+            if (shittyFps.cT >= 100) {
+                document.querySelector("#fps").innerHTML = ((shittyFps.m / shittyFps.cT) * 1000).toFixed(4);
+                shittyFps = {
+                    m: 0,
+                    cT: 0
+                };
+            }
+        });
+        if (err != null) {
+            console.error(err);
+        }
+
+        var dummyT = 0,
+            dummyLock = true,
+            imgDataDummy = null;
+
+        loop.dataUpdater.add("PLAY", function(T) {
+            dummyT += T;
+            if (dummyT >= 0) {
+                dummyLock = false;
+                dummyT = 0
+            }
+        });
+
+    /* ======= */
+    var fpsSelector = document.querySelector("[data-action='set-fps']");
+
+    document.querySelector("[data-action='loop-start']").addEventListener("click", loop.start.bind(loop));
+    document.querySelector("[data-action='loop-pause']").addEventListener("click", loop.pause.bind(loop));
+    document.querySelector("[data-action='hide-logs']").addEventListener("click", logger.toggleLogs.bind(logger));
+    document.querySelector("[data-action='clear-canvas']").addEventListener("click", function() {
+        graphic.clear();
+        imgDataDummy = null;
+    });
+    document.querySelector("[data-action='stop-animation']").addEventListener("click", function(){
+        err = loop.graphicUpdater.remove("PLAY", "pixelAnim");
+        if (err != null) {
+            console.info(err);
+        }
+    });
+    document.querySelector("[data-action='reload-animation']").addEventListener("click", function(){
+        err = loop.graphicUpdater.remove("PLAY", "pixelAnim");
+        if (err != null) {
+            console.info(err);
+        }
+        err = loop.graphicUpdater.add("PLAY", pixelAnim, "pixelAnim");
+        if (err != null) {
+            console.error(err);
+        }
+    });
+
+    document.querySelector("[data-action='toggle-debug']").addEventListener("click", function() {
+        if (debug.canvas.style.visibility == "visible" || debug.canvas.style.visibility == "") {
+            debug.canvas.style.visibility = "hidden";
+            return;
+        }
+        debug.canvas.style.visibility = "visible";
+    });
+
+    fpsSelector.addEventListener("keypress", function(e) {
+        if (e.charCode == 13) {
+            loop.setFrequencies(parseInt(e.target.value));
+        }
+    });
+    fpsSelector.value = initialFPS;
+});
 
 /***/ }),
 /* 5 */
@@ -629,91 +748,6 @@ Color.prototype.RGBA = function() {
 }
 
 module.exports = Color;
-
-/***/ }),
-/* 10 */,
-/* 11 */,
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Canvas = __webpack_require__(0);
-
-var Engine = function(scene, buffer) {
-    this.scene = new Canvas(scene);
-    this.buffer = new Canvas(buffer);
-    this.snap = null;
-}
-
-/**
- * Draw a rectangle
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} color 
- */
-Engine.prototype.draw = function(x, y, w, h, color) {
-   this.buffer.draw(x, y, w, h, color);
-}
-
-/**
- * Draw ImageData element onto engine's canvas
- * @param {*} imgData 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} dx 
- * @param {*} dy 
- */
-Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
-    this.buffer.drawImageData(imgData, x, y, dx, dy, w, h);
-}
-
-/**
- * Width of the engine's canvas
- * @return int
- */
-Engine.prototype.width = function() {
-    return this.scene.width();
-}
-
-/**
- * Height of the engine's canvas
- * @return int
- */
-Engine.prototype.height = function() {
-    return this.scene.height();
-}
-
-/**
- * Return the ImageData version of the whole engine's canvas
- * @return ImageData
- */
-Engine.prototype.captureScene = function() {
-    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
-}
-
-Engine.prototype.clear = function() {
-    this.scene.clear();
-    this.buffer.clear();
-}
-
-Engine.prototype.render = function() {
-    // this.scene.clear();
-    this.scene.drawImageData(
-        this.buffer.c.getImageData(
-            0, 0, this.buffer.width(), this.buffer.height()
-        )
-    );
-    this.buffer.clear();
-}
-
-Engine.prototype.snapshot = function() {
-    return this.buffer.snapshot();
-}
-
-module.exports = Engine;
 
 /***/ })
 /******/ ]);
