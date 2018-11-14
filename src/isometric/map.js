@@ -24,16 +24,16 @@ Map.prototype.loadMap = function() {
 
     for (x = 0; x < this.matrix.length; x++) {
         this.map[x] = [];
-        for (j = 0; j < this.matrix[x].length; j++) {
-            imgPath = this.matrix[x][j];
+        for (y = 0; y < this.matrix[x].length; y++) {
+            imgPath = this.matrix[x][y];
             if (imgPath == null) {
-                this.map[x][j] = null;
+                this.map[x][y] = null;
                 continue;
             }
             if (!this.assets[imgPath]) {
                 this.loadAsset(imgPath);
             }
-            this.map[x][j] = this.assets[imgPath];
+            this.map[x][y] = this.assets[imgPath];
         }
     }
 }

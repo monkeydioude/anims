@@ -95,7 +95,17 @@ Engine.prototype.draw = function(x, y, w, h, color) {
  * @param {*} dx 
  * @param {*} dy 
  */
-
+Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+    this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
+}
+/**
+ * Draw Image element onto engine's canvas
+ * @param {*} Image 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ */
 Engine.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
 }
@@ -195,7 +205,16 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
 
     this.c.drawImage(img, x, y, w, h);
  }
-
+/**
+ * Draw ImageData element onto canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
  Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     if (!x) x = 0;
     if (!y) y = 0;
@@ -392,7 +411,9 @@ var Graphic = __webpack_require__(0),
     Logger = __webpack_require__(5),
     Browser = __webpack_require__(6),
     Stack = __webpack_require__(7),
-    Color = __webpack_require__(9);
+    Color = __webpack_require__(9),
+    Map = __webpack_require__(11),
+    Engine = __webpack_require__(12);
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -415,8 +436,37 @@ document.addEventListener("DOMContentLoaded", function() {
             [1, 0, 1, 1, 0, 1],
             [1, 0, 0, 0, 0, 1],
             [0, 1, 1, 1, 1, 0]
-        ];
+        ],
+        engine = new Engine(
+            graphic,
+            loop
+        );
 
+        var map = new Map([
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
+        ]);
+    
+        map.loadMap();
+    
+        engine.setMap(map);
+        engine.start();
 
         var pixelAnim = function(T, engine) {
             if (dummyLock) {
@@ -427,8 +477,8 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             dummyLock = true;
             var m = [6, 6],
-                sX = (Math.random() * engine.height()) << 0,
-                sY = (Math.random() * engine.width()) << 0,
+                sX = (Math.random() * engine.width()) << 0,
+                sY = (Math.random() * engine.height()) << 0,
                 r = (Math.random() * 255) << 0,
                 g = (Math.random() * 255) << 0,
                 b = (Math.random() * 255) << 0,
@@ -748,6 +798,103 @@ Color.prototype.RGBA = function() {
 }
 
 module.exports = Color;
+
+/***/ }),
+/* 10 */,
+/* 11 */
+/***/ (function(module, exports) {
+
+var Map = function(matrix) {
+    this.matrix = matrix;
+    this.assets = [];
+    this.map = [];
+    this.assetLoadingIt = 0;
+    this.baseSrc = '../assets/map/tiles/';
+}
+
+Map.prototype.loadAsset = function(path) {
+    this.assets[path] = new Image();
+    
+    this.assetLoadingIt++;
+    this.assets[path].onload = function() {
+        this.assetLoadingIt--;
+    }.bind(this);
+
+    this.assets[path].src = this.baseSrc + path + '.png';
+    this.assets[path].crossOrigin = "Anonymous";
+
+}
+
+Map.prototype.loadMap = function() {
+    var imgPath = '';
+
+    for (x = 0; x < this.matrix.length; x++) {
+        this.map[x] = [];
+        for (y = 0; y < this.matrix[x].length; y++) {
+            imgPath = this.matrix[x][y];
+            if (imgPath == null) {
+                this.map[x][y] = null;
+                continue;
+            }
+            if (!this.assets[imgPath]) {
+                this.loadAsset(imgPath);
+            }
+            this.map[x][y] = this.assets[imgPath];
+        }
+    }
+}
+
+Map.prototype.isLoaded = function() {
+    return this.assetLoadingIt == 0;
+}
+
+module.exports = Map;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+var Engine = function(drawer, loopEngine) {
+    this.drawer = drawer;
+    this.loopEngine = loopEngine;
+    this.map = [];
+}
+
+Engine.prototype.start = function() {
+    this.loopEngine.displayUpdater.add("PLAY", this.displayMap.bind(this), "isometricEngineMapDisplay");
+}
+
+Engine.prototype.setMap = function(map) {
+    this.map = map;
+}
+
+Engine.prototype.displayMap = function() {
+    var tW = 64,
+        tH = 64,
+        startX = this.drawer.width() / 2,
+        cX = 0,
+        cY = 0;
+
+    if (!this.map.isLoaded()) {
+        this.drawer.scene.c.fillText("Loading...", 360, 295);
+        return 0;
+    }
+    
+    for (j = 0; j < this.map.map.length; j++) {
+        for (x = 0; x < this.map.map[j].length; x++) {
+            if (!this.map.map[j][x]) {
+                continue;
+            }
+            cX = startX + (x * tW) - (x * 32);
+            cY = (j * 16) + (x * 16);
+            this.drawer.drawImage(this.map.map[j][x], cX, cY, tW, tH);
+        }
+        startX -= 32;
+    }
+    return 1;
+}
+
+module.exports = Engine;
 
 /***/ })
 /******/ ]);

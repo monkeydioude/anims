@@ -44,7 +44,16 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
 
     this.c.drawImage(img, x, y, w, h);
  }
-
+/**
+ * Draw ImageData element onto canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
  Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     if (!x) x = 0;
     if (!y) y = 0;

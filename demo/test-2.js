@@ -38,8 +38,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     map.loadMap();
 
-    engine.start();
     engine.setMap(map);
+    engine.start();
 
     loop.setMode("PLAY");
     loop.start();

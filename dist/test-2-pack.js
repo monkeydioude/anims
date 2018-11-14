@@ -95,7 +95,17 @@ Engine.prototype.draw = function(x, y, w, h, color) {
  * @param {*} dx 
  * @param {*} dy 
  */
-
+Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+    this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
+}
+/**
+ * Draw Image element onto engine's canvas
+ * @param {*} Image 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ */
 Engine.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
 }
@@ -195,7 +205,16 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
 
     this.c.drawImage(img, x, y, w, h);
  }
-
+/**
+ * Draw ImageData element onto canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
  Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     if (!x) x = 0;
     if (!y) y = 0;
@@ -432,8 +451,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     map.loadMap();
 
-    engine.start();
     engine.setMap(map);
+    engine.start();
 
     loop.setMode("PLAY");
     loop.start();
@@ -470,16 +489,16 @@ Map.prototype.loadMap = function() {
 
     for (x = 0; x < this.matrix.length; x++) {
         this.map[x] = [];
-        for (j = 0; j < this.matrix[x].length; j++) {
-            imgPath = this.matrix[x][j];
+        for (y = 0; y < this.matrix[x].length; y++) {
+            imgPath = this.matrix[x][y];
             if (imgPath == null) {
-                this.map[x][j] = null;
+                this.map[x][y] = null;
                 continue;
             }
             if (!this.assets[imgPath]) {
                 this.loadAsset(imgPath);
             }
-            this.map[x][j] = this.assets[imgPath];
+            this.map[x][y] = this.assets[imgPath];
         }
     }
 }
