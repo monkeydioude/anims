@@ -60,11 +60,97 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ 	return __webpack_require__(__webpack_require__.s = 11);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+var Updater = function(name) {
+    if (!name) {
+        name = Date.now();
+    }
+    this.name = name;
+    this.nodes = {};
+    this.defaultNameCounter = 0;
+}
+
+/**
+ * 
+ * @param {int} T 
+ */
+Updater.prototype.update = function(mode, T, engine) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return ;
+    }
+    var n = this.nodes[mode],
+        updIt = 0,
+        updSt = 0;
+
+    for (var i in n) {
+        updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = 1;
+        }
+        if (updSt == -1) {
+            delete n[i];
+            continue;
+        }
+        updIt += updSt;
+    }
+    
+    return updIt;
+}
+
+/**
+ * 
+ * @param {function} cb
+ * @param {string} name 
+ * 
+ * @return {null|string}
+ */
+Updater.prototype.add = function(mode, cb, name) {
+    if (!mode) {
+        return "Mode must be provided";
+    }
+    
+    if (!name) {
+        name = this.defaultNameCounter;
+        this.defaultNameCounter++;
+    }
+
+    if (!this.nodes.hasOwnProperty(mode)) {
+        this.nodes[mode] = {};
+    }
+
+    if (this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not add element to the updater list, name already exists";
+    }
+
+    this.nodes[mode][name] = cb;
+
+    return null;
+}
+
+Updater.prototype.remove = function(mode, name) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return "Could not remove element, mode " + mode + " does not exist";
+    }
+
+    if (!this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not remove element, name " + name + " does not exist";
+    }
+
+    delete this.nodes[mode][name];
+
+    return null;
+}
+
+module.exports = Updater;
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports) {
 
 var Renderer = function(sceneCanvas, bufferCanvas) {
@@ -160,7 +246,7 @@ Renderer.prototype.snapshot = function() {
 module.exports = Renderer;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 var Canvas = function(canvas) {
@@ -243,10 +329,10 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  module.exports = Canvas;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Updater = __webpack_require__(3);
+var Updater = __webpack_require__(0);
 
 var Loop = function(fps, engine, startingMode)
 {
@@ -348,92 +434,6 @@ Loop.prototype.displayLoop = function(T) {
 }
 
 module.exports = Loop;
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports) {
-
-var Updater = function(name) {
-    if (!name) {
-        name = Date.now();
-    }
-    this.name = name;
-    this.nodes = {};
-    this.defaultNameCounter = 0;
-}
-
-/**
- * 
- * @param {int} T 
- */
-Updater.prototype.update = function(mode, T, engine) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return ;
-    }
-    var n = this.nodes[mode],
-        updIt = 0,
-        updSt = 0;
-
-    for (var i in n) {
-        updSt = n[i](T, engine);
-        if (updSt === undefined) {
-            updSt = 1;
-        }
-        if (updSt == -1) {
-            delete n[i];
-            continue;
-        }
-        updIt += updSt;
-    }
-    
-    return updIt;
-}
-
-/**
- * 
- * @param {function} cb
- * @param {string} name 
- * 
- * @return {null|string}
- */
-Updater.prototype.add = function(mode, cb, name) {
-    if (!mode) {
-        return "Mode must be provided";
-    }
-    
-    if (!name) {
-        name = this.defaultNameCounter;
-        this.defaultNameCounter++;
-    }
-
-    if (!this.nodes.hasOwnProperty(mode)) {
-        this.nodes[mode] = {};
-    }
-
-    if (this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not add element to the updater list, name already exists";
-    }
-
-    this.nodes[mode][name] = cb;
-
-    return null;
-}
-
-Updater.prototype.remove = function(mode, name) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return "Could not remove element, mode " + mode + " does not exist";
-    }
-
-    if (!this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not remove element, name " + name + " does not exist";
-    }
-
-    delete this.nodes[mode][name];
-
-    return null;
-}
-
-module.exports = Updater;
 
 /***/ }),
 /* 4 */
@@ -607,18 +607,26 @@ module.exports = CouldNotLoad;
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var Isometric = function(renderer, loop, camera, config) {
+var Updater = __webpack_require__(0),
+    Objects = __webpack_require__(9);
+
+var Isometric = function(renderer, displayUpdater, dataUpdater, camera, config) {
     this.renderer = renderer;
-    this.loop = loop;
+    this.displayUpdater = displayUpdater;
+    this.dataUpdater = dataUpdater;
     this.map = [];
     this.camera = camera;
     this.config = config;
+    this.objectUpdater = new Updater("iso");
+    this.objects = new Objects();
 }
 
-Isometric.prototype.start = function(x, y) {
-    this.loop.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
+Isometric.prototype.start = function() {
+    this.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
+    this.dataUpdater.add("PLAY", this.updateObjectPositions.bind(this), "isometricUpdateObjectPosition");
+    this.displayUpdater.add("PLAY", this.renderObjects.bind(this), "isometricRenderObjects");
 }
 
 Isometric.prototype.setMap = function(map) {
@@ -637,25 +645,106 @@ Isometric.prototype.renderMap = function() {
     return 1;
 }
 
+Isometric.prototype.renderObjects = function() {
+    var obj = null;
+    for (var x in this.objects.objects) {
+        for (var y in this.objects.objects[x]) {
+            for (var z in this.objects.objects[x][y]) {
+                x = parseInt(x);
+                y = parseInt(y);
+                z = parseInt(z);
+                obj = this.objects.get(x, y, z);
+                if (!obj) {
+                    continue;
+                }
+                this.drawImage(obj, x, y);
+            }
+        }
+    }
+    return 1;
+}
+
+Isometric.prototype.updateObjectPositions = function(T) {
+    this.objects = new Objects();
+    this.objectUpdater.update("PLAY", T, this.objects);
+    return 1;
+}
+
 Isometric.prototype.drawImage = function(img, x, y) {
+    if (img === undefined || img === null) {
+        return 1;
+    }
     var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
     this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
 }
-
+ 
 module.exports = Isometric;
 
 /***/ }),
-/* 9 */,
-/* 10 */
+/* 9 */
+/***/ (function(module, exports) {
+
+var Objects = function() {
+    this.objects = [];
+}
+
+Objects.prototype.exists = function(x, y, z) {
+    return this.objects[x] != undefined
+        && Array.isArray(this.objects[x])
+        && this.objects[x][y] != undefined
+        && Array.isArray(this.objects[x][y])
+        && this.objects[x][y][z] != undefined;
+}
+
+Objects.prototype.get = function(x, y, z) {
+    return this.exists(x, y, z) ? this.objects[x][y][z] : null;
+}
+
+Objects.prototype.canAddObject = function(entity, x, y, z) {
+    return entity !== undefined 
+        && x != undefined 
+        && y != undefined 
+        && z != undefined;
+}
+
+Objects.prototype.prepareObjectsArray = function(x, y) {
+    if (this.objects[x] === undefined) {
+        this.objects[x] = [];
+        this.objects[x][y] = [];
+        return;
+    }
+
+    if (this.objects[x][y] === undefined) {
+        this.objects[x][y] = [];
+    }
+}
+
+Objects.prototype.add = function(entity, x, y, z) {
+    if (z === undefined) {
+        z = 0;
+    }
+    if (!this.canAddObject(entity, x, y, z)) {
+        return -1;
+    }
+
+    this.prepareObjectsArray(x, y);
+    this.objects[x][y][z] = entity;
+}
+
+module.exports = Objects;
+
+/***/ }),
+/* 10 */,
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Graphic = __webpack_require__(0),
-    Canvas = __webpack_require__(1),
-    Loop = __webpack_require__(2),
-    Logger = __webpack_require__(11),
+var Graphic = __webpack_require__(1),
+    Canvas = __webpack_require__(2),
+    Loop = __webpack_require__(3),
+    Logger = __webpack_require__(12),
     Browser = __webpack_require__(4),
-    Stack = __webpack_require__(12),
-    Color = __webpack_require__(14),
+    Stack = __webpack_require__(13),
+    Color = __webpack_require__(15),
     Map = __webpack_require__(5),
     Assets = __webpack_require__(6),
     Engine = __webpack_require__(8);
@@ -874,7 +963,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports) {
 
 var Logger = function(type, shouldDisplayLogs) {
@@ -906,10 +995,10 @@ Logger.prototype.toggleLogs = function() {
 module.exports = Logger;
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Pixel = __webpack_require__(13);
+var Pixel = __webpack_require__(14);
 
 var Stack = function(x, y, color, m) {
     this.x = x;
@@ -963,7 +1052,7 @@ Stack.prototype.computeMatrix = function(m) {
 module.exports = Stack;
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 var Pixel = function(x, y, color) {
@@ -979,7 +1068,7 @@ Pixel.prototype.render = function(engine) {
 module.exports = Pixel;
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports) {
 
 var Color = function(r, g, b, a) {

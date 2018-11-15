@@ -18,7 +18,8 @@ var Renderer = require('../src/canvas/renderer'),
         loop = new Loop(30, renderer),
         engine = new Engine(
             renderer,
-            loop,
+            loop.displayUpdater,
+            loop.dataUpdater,
             camera,
             config
         ),
@@ -70,13 +71,13 @@ var Renderer = require('../src/canvas/renderer'),
     ]);
     loop.start();
 
-    loop.displayUpdater.add("PLAY", function() {
-        engine.drawImage(assets.get("building1"), 1, 3);
-        engine.drawImage(assets.get("building1"), 3, 6);
-        engine.drawImage(assets.get("building1"), 6, 2);
-        engine.drawImage(assets.get("building1"), 14, 9);
-        engine.drawImage(assets.get("building1"), 9, 14);
-        engine.drawImage(assets.get("building1"), 10, 10);
+    engine.objectUpdater.add("PLAY", function(T, objects) {
+        objects.add(assets.get("building1"), 1, 3);
+        objects.add(assets.get("building1"), 3, 6);
+        objects.add(assets.get("building1"), 6, 2);
+        objects.add(assets.get("building1"), 14, 9);
+        objects.add(assets.get("building1"), 9, 14);
+        objects.add(assets.get("building1"), 10, 10);
     }, "buildings")
 
     loop.displayUpdater.add("PLAY", function() {
@@ -102,7 +103,6 @@ var Renderer = require('../src/canvas/renderer'),
         },
         " ": function() {
             var label = "building-" + camera.coord.cX + camera.coord.cY;
-            console.log(label);
             if (buildings.hasOwnProperty(label)){
                 return
             }
@@ -111,8 +111,8 @@ var Renderer = require('../src/canvas/renderer'),
                 y: camera.coord.cY
             }
 
-            loop.displayUpdater.add("PLAY", function() {
-                engine.drawImage(assets.get("building1"), buildings[label].x - 1 << 0, buildings[label].y - 1 << 0)
+            engine.objectUpdater.add("PLAY", function(T, objects) {
+                objects.add(assets.get("building1"), buildings[label].x - 1 << 0, buildings[label].y - 1 << 0)
             }, label)
         }
     }

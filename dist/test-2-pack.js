@@ -60,11 +60,97 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 15);
+/******/ 	return __webpack_require__(__webpack_require__.s = 16);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+var Updater = function(name) {
+    if (!name) {
+        name = Date.now();
+    }
+    this.name = name;
+    this.nodes = {};
+    this.defaultNameCounter = 0;
+}
+
+/**
+ * 
+ * @param {int} T 
+ */
+Updater.prototype.update = function(mode, T, engine) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return ;
+    }
+    var n = this.nodes[mode],
+        updIt = 0,
+        updSt = 0;
+
+    for (var i in n) {
+        updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = 1;
+        }
+        if (updSt == -1) {
+            delete n[i];
+            continue;
+        }
+        updIt += updSt;
+    }
+    
+    return updIt;
+}
+
+/**
+ * 
+ * @param {function} cb
+ * @param {string} name 
+ * 
+ * @return {null|string}
+ */
+Updater.prototype.add = function(mode, cb, name) {
+    if (!mode) {
+        return "Mode must be provided";
+    }
+    
+    if (!name) {
+        name = this.defaultNameCounter;
+        this.defaultNameCounter++;
+    }
+
+    if (!this.nodes.hasOwnProperty(mode)) {
+        this.nodes[mode] = {};
+    }
+
+    if (this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not add element to the updater list, name already exists";
+    }
+
+    this.nodes[mode][name] = cb;
+
+    return null;
+}
+
+Updater.prototype.remove = function(mode, name) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return "Could not remove element, mode " + mode + " does not exist";
+    }
+
+    if (!this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not remove element, name " + name + " does not exist";
+    }
+
+    delete this.nodes[mode][name];
+
+    return null;
+}
+
+module.exports = Updater;
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports) {
 
 var Renderer = function(sceneCanvas, bufferCanvas) {
@@ -160,7 +246,7 @@ Renderer.prototype.snapshot = function() {
 module.exports = Renderer;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 var Canvas = function(canvas) {
@@ -243,10 +329,10 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  module.exports = Canvas;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Updater = __webpack_require__(3);
+var Updater = __webpack_require__(0);
 
 var Loop = function(fps, engine, startingMode)
 {
@@ -348,92 +434,6 @@ Loop.prototype.displayLoop = function(T) {
 }
 
 module.exports = Loop;
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports) {
-
-var Updater = function(name) {
-    if (!name) {
-        name = Date.now();
-    }
-    this.name = name;
-    this.nodes = {};
-    this.defaultNameCounter = 0;
-}
-
-/**
- * 
- * @param {int} T 
- */
-Updater.prototype.update = function(mode, T, engine) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return ;
-    }
-    var n = this.nodes[mode],
-        updIt = 0,
-        updSt = 0;
-
-    for (var i in n) {
-        updSt = n[i](T, engine);
-        if (updSt === undefined) {
-            updSt = 1;
-        }
-        if (updSt == -1) {
-            delete n[i];
-            continue;
-        }
-        updIt += updSt;
-    }
-    
-    return updIt;
-}
-
-/**
- * 
- * @param {function} cb
- * @param {string} name 
- * 
- * @return {null|string}
- */
-Updater.prototype.add = function(mode, cb, name) {
-    if (!mode) {
-        return "Mode must be provided";
-    }
-    
-    if (!name) {
-        name = this.defaultNameCounter;
-        this.defaultNameCounter++;
-    }
-
-    if (!this.nodes.hasOwnProperty(mode)) {
-        this.nodes[mode] = {};
-    }
-
-    if (this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not add element to the updater list, name already exists";
-    }
-
-    this.nodes[mode][name] = cb;
-
-    return null;
-}
-
-Updater.prototype.remove = function(mode, name) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return "Could not remove element, mode " + mode + " does not exist";
-    }
-
-    if (!this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not remove element, name " + name + " does not exist";
-    }
-
-    delete this.nodes[mode][name];
-
-    return null;
-}
-
-module.exports = Updater;
 
 /***/ }),
 /* 4 */
@@ -607,18 +607,26 @@ module.exports = CouldNotLoad;
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var Isometric = function(renderer, loop, camera, config) {
+var Updater = __webpack_require__(0),
+    Objects = __webpack_require__(9);
+
+var Isometric = function(renderer, displayUpdater, dataUpdater, camera, config) {
     this.renderer = renderer;
-    this.loop = loop;
+    this.displayUpdater = displayUpdater;
+    this.dataUpdater = dataUpdater;
     this.map = [];
     this.camera = camera;
     this.config = config;
+    this.objectUpdater = new Updater("iso");
+    this.objects = new Objects();
 }
 
-Isometric.prototype.start = function(x, y) {
-    this.loop.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
+Isometric.prototype.start = function() {
+    this.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
+    this.dataUpdater.add("PLAY", this.updateObjectPositions.bind(this), "isometricUpdateObjectPosition");
+    this.displayUpdater.add("PLAY", this.renderObjects.bind(this), "isometricRenderObjects");
 }
 
 Isometric.prototype.setMap = function(map) {
@@ -637,15 +645,96 @@ Isometric.prototype.renderMap = function() {
     return 1;
 }
 
+Isometric.prototype.renderObjects = function() {
+    var obj = null;
+    for (var x in this.objects.objects) {
+        for (var y in this.objects.objects[x]) {
+            for (var z in this.objects.objects[x][y]) {
+                x = parseInt(x);
+                y = parseInt(y);
+                z = parseInt(z);
+                obj = this.objects.get(x, y, z);
+                if (!obj) {
+                    continue;
+                }
+                this.drawImage(obj, x, y);
+            }
+        }
+    }
+    return 1;
+}
+
+Isometric.prototype.updateObjectPositions = function(T) {
+    this.objects = new Objects();
+    this.objectUpdater.update("PLAY", T, this.objects);
+    return 1;
+}
+
 Isometric.prototype.drawImage = function(img, x, y) {
+    if (img === undefined || img === null) {
+        return 1;
+    }
     var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
     this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
 }
-
+ 
 module.exports = Isometric;
 
 /***/ }),
 /* 9 */
+/***/ (function(module, exports) {
+
+var Objects = function() {
+    this.objects = [];
+}
+
+Objects.prototype.exists = function(x, y, z) {
+    return this.objects[x] != undefined
+        && Array.isArray(this.objects[x])
+        && this.objects[x][y] != undefined
+        && Array.isArray(this.objects[x][y])
+        && this.objects[x][y][z] != undefined;
+}
+
+Objects.prototype.get = function(x, y, z) {
+    return this.exists(x, y, z) ? this.objects[x][y][z] : null;
+}
+
+Objects.prototype.canAddObject = function(entity, x, y, z) {
+    return entity !== undefined 
+        && x != undefined 
+        && y != undefined 
+        && z != undefined;
+}
+
+Objects.prototype.prepareObjectsArray = function(x, y) {
+    if (this.objects[x] === undefined) {
+        this.objects[x] = [];
+        this.objects[x][y] = [];
+        return;
+    }
+
+    if (this.objects[x][y] === undefined) {
+        this.objects[x][y] = [];
+    }
+}
+
+Objects.prototype.add = function(entity, x, y, z) {
+    if (z === undefined) {
+        z = 0;
+    }
+    if (!this.canAddObject(entity, x, y, z)) {
+        return -1;
+    }
+
+    this.prepareObjectsArray(x, y);
+    this.objects[x][y][z] = entity;
+}
+
+module.exports = Objects;
+
+/***/ }),
+/* 10 */
 /***/ (function(module, exports) {
 
 var config = {
@@ -666,23 +755,23 @@ config['canvasMY'] = config.canvasH / 2;
 module.exports = config;
 
 /***/ }),
-/* 10 */,
 /* 11 */,
 /* 12 */,
 /* 13 */,
 /* 14 */,
-/* 15 */
+/* 15 */,
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Renderer = __webpack_require__(0),
-    Canvas = __webpack_require__(1),
-    Loop = __webpack_require__(2),
+var Renderer = __webpack_require__(1),
+    Canvas = __webpack_require__(2),
+    Loop = __webpack_require__(3),
     Map = __webpack_require__(5),
     Browser = __webpack_require__(4),
     Assets = __webpack_require__(6),
-    Camera = __webpack_require__(16),
-    config = __webpack_require__(9),
-    Coord = __webpack_require__(17),
+    Camera = __webpack_require__(17),
+    config = __webpack_require__(10),
+    Coord = __webpack_require__(18),
     Engine = __webpack_require__(8);
 
 (new Browser()).onReady(function() {
@@ -694,7 +783,8 @@ var Renderer = __webpack_require__(0),
         loop = new Loop(30, renderer),
         engine = new Engine(
             renderer,
-            loop,
+            loop.displayUpdater,
+            loop.dataUpdater,
             camera,
             config
         ),
@@ -746,13 +836,13 @@ var Renderer = __webpack_require__(0),
     ]);
     loop.start();
 
-    loop.displayUpdater.add("PLAY", function() {
-        engine.drawImage(assets.get("building1"), 1, 3);
-        engine.drawImage(assets.get("building1"), 3, 6);
-        engine.drawImage(assets.get("building1"), 6, 2);
-        engine.drawImage(assets.get("building1"), 14, 9);
-        engine.drawImage(assets.get("building1"), 9, 14);
-        engine.drawImage(assets.get("building1"), 10, 10);
+    engine.objectUpdater.add("PLAY", function(T, objects) {
+        objects.add(assets.get("building1"), 1, 3);
+        objects.add(assets.get("building1"), 3, 6);
+        objects.add(assets.get("building1"), 6, 2);
+        objects.add(assets.get("building1"), 14, 9);
+        objects.add(assets.get("building1"), 9, 14);
+        objects.add(assets.get("building1"), 10, 10);
     }, "buildings")
 
     loop.displayUpdater.add("PLAY", function() {
@@ -778,7 +868,6 @@ var Renderer = __webpack_require__(0),
         },
         " ": function() {
             var label = "building-" + camera.coord.cX + camera.coord.cY;
-            console.log(label);
             if (buildings.hasOwnProperty(label)){
                 return
             }
@@ -787,8 +876,8 @@ var Renderer = __webpack_require__(0),
                 y: camera.coord.cY
             }
 
-            loop.displayUpdater.add("PLAY", function() {
-                engine.drawImage(assets.get("building1"), buildings[label].x - 1 << 0, buildings[label].y - 1 << 0)
+            engine.objectUpdater.add("PLAY", function(T, objects) {
+                objects.add(assets.get("building1"), buildings[label].x - 1 << 0, buildings[label].y - 1 << 0)
             }, label)
         }
     }
@@ -800,7 +889,7 @@ var Renderer = __webpack_require__(0),
 });
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 var Camera = function(coord) {
@@ -841,10 +930,10 @@ Camera.prototype.getCoordinates = function () {
 module.exports = Camera;
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var config = __webpack_require__(9);
+var config = __webpack_require__(10);
 
 var Coordinates = function(cX, cY) {
     this.start = {
