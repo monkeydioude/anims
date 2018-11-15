@@ -24,6 +24,12 @@ Canvas.prototype.height = function() {
     return this.canvas.height;
 }
 
+Canvas.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.c.moveTo(fX, fY);
+    this.c.lineTo(tX, tY);
+    this.c.stroke();
+}
+
 /**
  * @param int x
  * @param int y

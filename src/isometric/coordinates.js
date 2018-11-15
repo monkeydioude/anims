@@ -1,7 +1,10 @@
 var config = require('../config');
 
 var Coordinates = function(cX, cY) {
-    this.start = {};
+    this.start = {
+        x: config.canvasMX,
+        y: config.canvasMY
+    };
     if (cX === undefined || cY === undefined) {
         cX = 0;
         cY = 0;
@@ -12,8 +15,8 @@ var Coordinates = function(cX, cY) {
 
 Coordinates.prototype.computeStart = function() {
     this.start = {
-        y: (config.canvasH / 2) - (this.cY * (config.tileTopH / 2)),
-        x: (config.canvasW / 2) - (this.cX * (config.tileTopW / 2))
+        x: config.canvasMX - config.isoDecalX + ((this.cY - this.cX) * config.isoDecalX),
+        y: config.canvasMY - config.isoDecalY - ((this.cX + this.cY) * config.isoDecalY)
     }
     return this;
 }
@@ -23,12 +26,9 @@ Coordinates.prototype.getStart = function () {
 }
 
 Coordinates.prototype.fromTileCoordinates = function(x, y) {
-    var decalX = config.tileTopW / 2,
-        decalY = config.tileTopH / 2;   
-
     return {
-        x: this.start.x + (x * config.tileTopW) - (x * decalX) - (decalX * y),
-        y: this.start.y + (y * decalY) + (x * decalY)
+        x: this.start.x + (x * config.tileTopW) - ((x + y) * config.isoDecalX),
+        y: this.start.y + ((x + y) * config.isoDecalY)
     }
 }
 

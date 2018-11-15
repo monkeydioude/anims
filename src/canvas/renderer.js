@@ -41,6 +41,10 @@ Renderer.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
 }
 
+Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.buffer.drawLine(fX, fY, tX, tY);
+}
+
 /**
  * Width of the engine's canvas
  * @return int

@@ -60,25 +60,11 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 15);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports) {
-
-
-module.exports = {
-    canvasW: 800,
-    canvasH: 600,
-    tileW: 64,
-    tileH: 64,
-    tileTopW: 64,
-    tileTopH: 32
-};
-
-/***/ }),
-/* 1 */
 /***/ (function(module, exports) {
 
 var Renderer = function(sceneCanvas, bufferCanvas) {
@@ -122,6 +108,10 @@ Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
  */
 Renderer.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
+}
+
+Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.buffer.drawLine(fX, fY, tX, tY);
 }
 
 /**
@@ -170,7 +160,7 @@ Renderer.prototype.snapshot = function() {
 module.exports = Renderer;
 
 /***/ }),
-/* 2 */
+/* 1 */
 /***/ (function(module, exports) {
 
 var Canvas = function(canvas) {
@@ -197,6 +187,12 @@ Canvas.prototype.width = function() {
  */
 Canvas.prototype.height = function() {
     return this.canvas.height;
+}
+
+Canvas.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.c.moveTo(fX, fY);
+    this.c.lineTo(tX, tY);
+    this.c.stroke();
 }
 
 /**
@@ -247,10 +243,10 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  module.exports = Canvas;
 
 /***/ }),
-/* 3 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Updater = __webpack_require__(4);
+var Updater = __webpack_require__(3);
 
 var Loop = function(fps, engine, startingMode)
 {
@@ -354,7 +350,7 @@ Loop.prototype.displayLoop = function(T) {
 module.exports = Loop;
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports) {
 
 var Updater = function(name) {
@@ -381,7 +377,7 @@ Updater.prototype.update = function(mode, T, engine) {
     for (var i in n) {
         updSt = n[i](T, engine);
         if (updSt === undefined) {
-            updSt = -1;
+            updSt = 1;
         }
         if (updSt == -1) {
             delete n[i];
@@ -440,7 +436,7 @@ Updater.prototype.remove = function(mode, name) {
 module.exports = Updater;
 
 /***/ }),
-/* 5 */
+/* 4 */
 /***/ (function(module, exports) {
 
 var Browser = function()
@@ -502,7 +498,7 @@ Browser.prototype.onReady = function(cb) {
 module.exports = Browser;
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports) {
 
 var Map = function(matrix, assets) {
@@ -523,10 +519,10 @@ Map.prototype.loadMap = function() {
 module.exports = Map;
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var CouldNotLoad = __webpack_require__(8);
+var CouldNotLoad = __webpack_require__(7);
 
 var Assets = function() {
     this.assets = [];
@@ -596,7 +592,7 @@ Assets.prototype.get = function(name) {
 module.exports = Assets;
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports) {
 
 var CouldNotLoad = function(msg) {
@@ -610,7 +606,7 @@ CouldNotLoad.prototype.error = function() {
 module.exports = CouldNotLoad;
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports) {
 
 var Isometric = function(renderer, loop, camera, config) {
@@ -649,71 +645,52 @@ Isometric.prototype.drawImage = function(img, x, y) {
 module.exports = Isometric;
 
 /***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
+/* 9 */
+/***/ (function(module, exports) {
 
-var config = __webpack_require__(0);
-
-var Coordinates = function(cX, cY) {
-    this.start = {};
-    if (cX === undefined || cY === undefined) {
-        cX = 0;
-        cY = 0;
-    }
-    this.cX = cX;
-    this.cY = cY;
+var config = {
+    canvasW: 800,
+    canvasH: 600,
+    tileW: 64,
+    tileH: 64,
+    tileTopW: 64,
+    tileTopH: 32,
 }
 
-Coordinates.prototype.computeStart = function() {
-    this.start = {
-        y: (config.canvasH / 2) - (this.cY * (config.tileTopH / 2)),
-        x: (config.canvasW / 2) - (this.cX * (config.tileTopW / 2))
-    }
-    return this;
-}
+config['isoDecalX'] = config.tileTopW / 2;
+config['isoDecalY'] = config.tileTopH / 2;
+config['canvasMX'] = (config.canvasW / 2);
+config['canvasMY'] = config.canvasH / 2;
 
-Coordinates.prototype.getStart = function () {
-    return this.start;
-}
 
-Coordinates.prototype.fromTileCoordinates = function(x, y) {
-    var decalX = config.tileTopW / 2,
-        decalY = config.tileTopH / 2;   
-
-    return {
-        x: this.start.x + (x * config.tileTopW) - (x * decalX) - (decalX * y),
-        y: this.start.y + (y * decalY) + (x * decalY)
-    }
-}
-
-module.exports = Coordinates;
+module.exports = config;
 
 /***/ }),
+/* 10 */,
 /* 11 */,
 /* 12 */,
 /* 13 */,
 /* 14 */,
-/* 15 */,
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Renderer = __webpack_require__(1),
-    Canvas = __webpack_require__(2),
-    Loop = __webpack_require__(3),
-    Map = __webpack_require__(6),
-    Browser = __webpack_require__(5),
-    Assets = __webpack_require__(7),
-    Camera = __webpack_require__(17),
-    config = __webpack_require__(0),
-    Coord = __webpack_require__(10),
-    Engine = __webpack_require__(9);
+var Renderer = __webpack_require__(0),
+    Canvas = __webpack_require__(1),
+    Loop = __webpack_require__(2),
+    Map = __webpack_require__(5),
+    Browser = __webpack_require__(4),
+    Assets = __webpack_require__(6),
+    Camera = __webpack_require__(16),
+    config = __webpack_require__(9),
+    Coord = __webpack_require__(17),
+    Engine = __webpack_require__(8);
 
 (new Browser()).onReady(function() {
-    var camera = new Camera(new Coord(7, 9)),
+    var camera = new Camera(new Coord(2, 6)),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
-        ),zz
+        ),
         loop = new Loop(30, renderer),
         engine = new Engine(
             renderer,
@@ -736,8 +713,8 @@ var Renderer = __webpack_require__(1),
     }
 
     var map = new Map([
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_1', '0_0', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
@@ -776,16 +753,27 @@ var Renderer = __webpack_require__(1),
         engine.drawImage(assets.get("building1"), 14, 9);
         engine.drawImage(assets.get("building1"), 9, 14);
         engine.drawImage(assets.get("building1"), 10, 10);
-        return 1;
-        // return 0;
     }, "building1")
 
-    var cameraTileMove = 0.5;
+    loop.displayUpdater.add("PLAY", function() {
+        renderer.drawLine(400, 0, 400, 600)
+        renderer.drawLine(0, 300, 800, 300)
+    }, "middle");
+
+    var cameraTileMove = 1;
     var pressFunc = {
-        "z": function(){camera.addY(-cameraTileMove)},
-        "s": function(){camera.addY(cameraTileMove)},
-        "q": function(){camera.addX(-cameraTileMove)},
-        "d": function(){camera.addX(cameraTileMove)}
+        "z": function(){
+            camera.add(-cameraTileMove, -cameraTileMove)
+        },
+        "s": function(){
+            camera.add(cameraTileMove, cameraTileMove)
+        },
+        "q": function(){
+            camera.add(-cameraTileMove, cameraTileMove)
+        },
+        "d": function(){
+            camera.add(cameraTileMove, -cameraTileMove)
+        }
     }
     document.addEventListener("keydown", function(e) {
         if (pressFunc.hasOwnProperty(e.key)) {
@@ -795,7 +783,7 @@ var Renderer = __webpack_require__(1),
 });
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports) {
 
 var Camera = function(coord) {
@@ -804,28 +792,76 @@ var Camera = function(coord) {
 }
 
 Camera.prototype.setX = function(x) {
-    this.coord.cX = x;
-    this.coord.computeStart();
+    this.set(x, this.coord.cY);
 }
 
 Camera.prototype.setY = function(y) {
+    this.set(this.coord.cX, y);
+}
+Camera.prototype.set = function(x, y) {
+    this.coord.cX = x;
     this.coord.cY = y;
     this.coord.computeStart();
 }
 
 Camera.prototype.addX = function(x) {
-    this.setX(this.coord.cX + x)
+    this.add(this.coord.cX + x, 0)
 }
 
 Camera.prototype.addY = function(y) {
-    this.setY(this.coord.cY + y)
+    this.add(0, this.coord.cY + y)
 }
 
+Camera.prototype.add = function(x, y) {
+    this.coord.cX += x;
+    this.coord.cY += y;
+    this.coord.computeStart();
+}
 Camera.prototype.getCoordinates = function () {
     return this.coord;
 }
 
 module.exports = Camera;
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var config = __webpack_require__(9);
+
+var Coordinates = function(cX, cY) {
+    this.start = {
+        x: config.canvasMX,
+        y: config.canvasMY
+    };
+    if (cX === undefined || cY === undefined) {
+        cX = 0;
+        cY = 0;
+    }
+    this.cX = cX;
+    this.cY = cY;
+}
+
+Coordinates.prototype.computeStart = function() {
+    this.start = {
+        x: config.canvasMX - config.isoDecalX + ((this.cY - this.cX) * config.isoDecalX),
+        y: config.canvasMY - config.isoDecalY - ((this.cX + this.cY) * config.isoDecalY)
+    }
+    return this;
+}
+
+Coordinates.prototype.getStart = function () {
+    return this.start;
+}
+
+Coordinates.prototype.fromTileCoordinates = function(x, y) {
+    return {
+        x: this.start.x + (x * config.tileTopW) - ((x + y) * config.isoDecalX),
+        y: this.start.y + ((x + y) * config.isoDecalY)
+    }
+}
+
+module.exports = Coordinates;
 
 /***/ })
 /******/ ]);

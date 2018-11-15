@@ -10,11 +10,11 @@ var Renderer = require('../src/canvas/renderer'),
     Engine = require('../src/isometric/isometric');
 
 (new Browser()).onReady(function() {
-    var camera = new Camera(new Coord(7, 9)),
+    var camera = new Camera(new Coord(2, 6)),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
-        ),zz
+        ),
         loop = new Loop(30, renderer),
         engine = new Engine(
             renderer,
@@ -37,8 +37,8 @@ var Renderer = require('../src/canvas/renderer'),
     }
 
     var map = new Map([
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_1', '0_0', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
@@ -77,16 +77,27 @@ var Renderer = require('../src/canvas/renderer'),
         engine.drawImage(assets.get("building1"), 14, 9);
         engine.drawImage(assets.get("building1"), 9, 14);
         engine.drawImage(assets.get("building1"), 10, 10);
-        return 1;
-        // return 0;
     }, "building1")
 
-    var cameraTileMove = 0.5;
+    loop.displayUpdater.add("PLAY", function() {
+        renderer.drawLine(400, 0, 400, 600)
+        renderer.drawLine(0, 300, 800, 300)
+    }, "middle");
+
+    var cameraTileMove = 1;
     var pressFunc = {
-        "z": function(){camera.addY(-cameraTileMove)},
-        "s": function(){camera.addY(cameraTileMove)},
-        "q": function(){camera.addX(-cameraTileMove)},
-        "d": function(){camera.addX(cameraTileMove)}
+        "z": function(){
+            camera.add(-cameraTileMove, -cameraTileMove)
+        },
+        "s": function(){
+            camera.add(cameraTileMove, cameraTileMove)
+        },
+        "q": function(){
+            camera.add(-cameraTileMove, cameraTileMove)
+        },
+        "d": function(){
+            camera.add(cameraTileMove, -cameraTileMove)
+        }
     }
     document.addEventListener("keydown", function(e) {
         if (pressFunc.hasOwnProperty(e.key)) {

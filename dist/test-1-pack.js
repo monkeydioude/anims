@@ -60,12 +60,11 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 11);
+/******/ 	return __webpack_require__(__webpack_require__.s = 10);
 /******/ })
 /************************************************************************/
 /******/ ([
-/* 0 */,
-/* 1 */
+/* 0 */
 /***/ (function(module, exports) {
 
 var Renderer = function(sceneCanvas, bufferCanvas) {
@@ -109,6 +108,10 @@ Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
  */
 Renderer.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
+}
+
+Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.buffer.drawLine(fX, fY, tX, tY);
 }
 
 /**
@@ -157,7 +160,7 @@ Renderer.prototype.snapshot = function() {
 module.exports = Renderer;
 
 /***/ }),
-/* 2 */
+/* 1 */
 /***/ (function(module, exports) {
 
 var Canvas = function(canvas) {
@@ -184,6 +187,12 @@ Canvas.prototype.width = function() {
  */
 Canvas.prototype.height = function() {
     return this.canvas.height;
+}
+
+Canvas.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.c.moveTo(fX, fY);
+    this.c.lineTo(tX, tY);
+    this.c.stroke();
 }
 
 /**
@@ -234,10 +243,10 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  module.exports = Canvas;
 
 /***/ }),
-/* 3 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Updater = __webpack_require__(4);
+var Updater = __webpack_require__(3);
 
 var Loop = function(fps, engine, startingMode)
 {
@@ -341,7 +350,7 @@ Loop.prototype.displayLoop = function(T) {
 module.exports = Loop;
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports) {
 
 var Updater = function(name) {
@@ -368,7 +377,7 @@ Updater.prototype.update = function(mode, T, engine) {
     for (var i in n) {
         updSt = n[i](T, engine);
         if (updSt === undefined) {
-            updSt = -1;
+            updSt = 1;
         }
         if (updSt == -1) {
             delete n[i];
@@ -427,7 +436,7 @@ Updater.prototype.remove = function(mode, name) {
 module.exports = Updater;
 
 /***/ }),
-/* 5 */
+/* 4 */
 /***/ (function(module, exports) {
 
 var Browser = function()
@@ -489,7 +498,7 @@ Browser.prototype.onReady = function(cb) {
 module.exports = Browser;
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports) {
 
 var Map = function(matrix, assets) {
@@ -510,10 +519,10 @@ Map.prototype.loadMap = function() {
 module.exports = Map;
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var CouldNotLoad = __webpack_require__(8);
+var CouldNotLoad = __webpack_require__(7);
 
 var Assets = function() {
     this.assets = [];
@@ -583,7 +592,7 @@ Assets.prototype.get = function(name) {
 module.exports = Assets;
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports) {
 
 var CouldNotLoad = function(msg) {
@@ -597,7 +606,7 @@ CouldNotLoad.prototype.error = function() {
 module.exports = CouldNotLoad;
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports) {
 
 var Isometric = function(renderer, loop, camera, config) {
@@ -636,20 +645,20 @@ Isometric.prototype.drawImage = function(img, x, y) {
 module.exports = Isometric;
 
 /***/ }),
-/* 10 */,
-/* 11 */
+/* 9 */,
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Graphic = __webpack_require__(1),
-    Canvas = __webpack_require__(2),
-    Loop = __webpack_require__(3),
-    Logger = __webpack_require__(12),
-    Browser = __webpack_require__(5),
-    Stack = __webpack_require__(13),
-    Color = __webpack_require__(15),
-    Map = __webpack_require__(6),
-    Assets = __webpack_require__(7),
-    Engine = __webpack_require__(9);
+var Graphic = __webpack_require__(0),
+    Canvas = __webpack_require__(1),
+    Loop = __webpack_require__(2),
+    Logger = __webpack_require__(11),
+    Browser = __webpack_require__(4),
+    Stack = __webpack_require__(12),
+    Color = __webpack_require__(14),
+    Map = __webpack_require__(5),
+    Assets = __webpack_require__(6),
+    Engine = __webpack_require__(8);
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -865,7 +874,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports) {
 
 var Logger = function(type, shouldDisplayLogs) {
@@ -897,10 +906,10 @@ Logger.prototype.toggleLogs = function() {
 module.exports = Logger;
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Pixel = __webpack_require__(14);
+var Pixel = __webpack_require__(13);
 
 var Stack = function(x, y, color, m) {
     this.x = x;
@@ -954,7 +963,7 @@ Stack.prototype.computeMatrix = function(m) {
 module.exports = Stack;
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports) {
 
 var Pixel = function(x, y, color) {
@@ -970,7 +979,7 @@ Pixel.prototype.render = function(engine) {
 module.exports = Pixel;
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports) {
 
 var Color = function(r, g, b, a) {
