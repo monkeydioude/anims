@@ -16,7 +16,7 @@ var Coordinates = function(cX, cY) {
 Coordinates.prototype.computeStart = function() {
     this.start = {
         x: config.canvasMX - config.isoDecalX + ((this.cY - this.cX) * config.isoDecalX),
-        y: config.canvasMY - config.isoDecalY - ((this.cX + this.cY) * config.isoDecalY)
+        y: config.canvasMY - ((this.cX + this.cY) * config.isoDecalY)
     }
     return this;
 }

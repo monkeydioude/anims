@@ -10,7 +10,7 @@ var Renderer = require('../src/canvas/renderer'),
     Engine = require('../src/isometric/isometric');
 
 (new Browser()).onReady(function() {
-    var camera = new Camera(new Coord(2, 6)),
+    var camera = new Camera(new Coord(2.5, 6.5)),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
@@ -85,7 +85,7 @@ var Renderer = require('../src/canvas/renderer'),
         renderer.drawLine((config.canvasW / 2) - (arrowSize / 2), 300, (config.canvasW / 2) + (arrowSize / 2), 300)
     }, "camera");
 
-    var cameraTileMove = 1;
+    var cameraTileMove = 0.25;
     var buildings = {};
     var pressFunc = {
         "z": function(){
@@ -112,7 +112,7 @@ var Renderer = require('../src/canvas/renderer'),
             }
 
             loop.displayUpdater.add("PLAY", function() {
-                engine.drawImage(assets.get("building1"), buildings[label].x, buildings[label].y)
+                engine.drawImage(assets.get("building1"), buildings[label].x - 1 << 0, buildings[label].y - 1 << 0)
             }, label)
         }
     }

@@ -686,7 +686,7 @@ var Renderer = __webpack_require__(0),
     Engine = __webpack_require__(8);
 
 (new Browser()).onReady(function() {
-    var camera = new Camera(new Coord(2, 6)),
+    var camera = new Camera(new Coord(2.5, 6.5)),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
@@ -761,7 +761,7 @@ var Renderer = __webpack_require__(0),
         renderer.drawLine((config.canvasW / 2) - (arrowSize / 2), 300, (config.canvasW / 2) + (arrowSize / 2), 300)
     }, "camera");
 
-    var cameraTileMove = 1;
+    var cameraTileMove = 0.25;
     var buildings = {};
     var pressFunc = {
         "z": function(){
@@ -788,7 +788,7 @@ var Renderer = __webpack_require__(0),
             }
 
             loop.displayUpdater.add("PLAY", function() {
-                engine.drawImage(assets.get("building1"), buildings[label].x, buildings[label].y)
+                engine.drawImage(assets.get("building1"), buildings[label].x - 1 << 0, buildings[label].y - 1 << 0)
             }, label)
         }
     }
@@ -862,7 +862,7 @@ var Coordinates = function(cX, cY) {
 Coordinates.prototype.computeStart = function() {
     this.start = {
         x: config.canvasMX - config.isoDecalX + ((this.cY - this.cX) * config.isoDecalX),
-        y: config.canvasMY - config.isoDecalY - ((this.cX + this.cY) * config.isoDecalY)
+        y: config.canvasMY - ((this.cX + this.cY) * config.isoDecalY)
     }
     return this;
 }
