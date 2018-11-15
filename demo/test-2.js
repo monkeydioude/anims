@@ -77,26 +77,43 @@ var Renderer = require('../src/canvas/renderer'),
         engine.drawImage(assets.get("building1"), 14, 9);
         engine.drawImage(assets.get("building1"), 9, 14);
         engine.drawImage(assets.get("building1"), 10, 10);
-    }, "building1")
+    }, "buildings")
 
     loop.displayUpdater.add("PLAY", function() {
-        renderer.drawLine(400, 0, 400, 600)
-        renderer.drawLine(0, 300, 800, 300)
-    }, "middle");
+        var arrowSize = 8;
+        renderer.drawLine(400, (config.canvasH / 2) - (arrowSize / 2), 400, (config.canvasH / 2) + (arrowSize / 2))
+        renderer.drawLine((config.canvasW / 2) - (arrowSize / 2), 300, (config.canvasW / 2) + (arrowSize / 2), 300)
+    }, "camera");
 
     var cameraTileMove = 1;
+    var buildings = {};
     var pressFunc = {
         "z": function(){
-            camera.add(-cameraTileMove, -cameraTileMove)
+            camera.addY(-cameraTileMove)
         },
         "s": function(){
-            camera.add(cameraTileMove, cameraTileMove)
+            camera.addY(cameraTileMove)
         },
         "q": function(){
-            camera.add(-cameraTileMove, cameraTileMove)
+            camera.addX(-cameraTileMove)
         },
         "d": function(){
-            camera.add(cameraTileMove, -cameraTileMove)
+            camera.addX(cameraTileMove)
+        },
+        " ": function() {
+            var label = "building-" + camera.coord.cX + camera.coord.cY;
+            console.log(label);
+            if (buildings.hasOwnProperty(label)){
+                return
+            }
+            buildings[label] = {
+                x: camera.coord.cX,
+                y: camera.coord.cY
+            }
+
+            loop.displayUpdater.add("PLAY", function() {
+                engine.drawImage(assets.get("building1"), buildings[label].x, buildings[label].y)
+            }, label)
         }
     }
     document.addEventListener("keydown", function(e) {

@@ -17,11 +17,11 @@ Camera.prototype.set = function(x, y) {
 }
 
 Camera.prototype.addX = function(x) {
-    this.add(this.coord.cX + x, 0)
+    this.add(x, 0)
 }
 
 Camera.prototype.addY = function(y) {
-    this.add(0, this.coord.cY + y)
+    this.add(0, y)
 }
 
 Camera.prototype.add = function(x, y) {
