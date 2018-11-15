@@ -50,4 +50,8 @@ Browser.prototype.onDocumentVisible = function(cb)
     return this;    
 }
 
+Browser.prototype.onReady = function(cb) {
+    document.addEventListener("DOMContentLoaded", cb);
+}
+
 module.exports = Browser;

@@ -1,12 +1,13 @@
-var Graphic = require('../src/graphic/drawer'),
-    Canvas = require('../src/canvas'),
+var Graphic = require('../src/canvas/renderer'),
+    Canvas = require('../src/canvas/canvas'),
     Loop = require('../src/loop'),
     Logger = require('../src/logger'),
     Browser = require('../src/browser'),
     Stack = require('../src/render/stack'),
     Color = require('../src/render/color'),
     Map = require('../src/isometric/map'),
-    Engine = require('../src/isometric/engine');
+    Assets = require('../src/assets/assets'),
+    Engine = require('../src/isometric/isometric');
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -33,7 +34,19 @@ document.addEventListener("DOMContentLoaded", function() {
         engine = new Engine(
             graphic,
             loop
+        ),
+        assets = new Assets();
+
+        var err = assets.loadImages(
+            {
+                "0_0": "../assets/map/tiles/0_0.png",
+                "0_1": "../assets/map/tiles/0_1.png",
+            }
         );
+    
+        loop.addStartingConditions([
+            assets.hasFinishedLoading.bind(assets)
+        ]);
 
         var map = new Map([
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
@@ -54,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function() {
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
-        ]);
+        ], assets);
     
         map.loadMap();
     

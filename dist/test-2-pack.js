@@ -60,14 +60,28 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ 	return __webpack_require__(__webpack_require__.s = 16);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
 /***/ (function(module, exports) {
 
-var Engine = function(sceneCanvas, bufferCanvas) {
+
+module.exports = {
+    canvasW: 800,
+    canvasH: 600,
+    tileW: 64,
+    tileH: 64,
+    tileTopW: 64,
+    tileTopH: 32
+};
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+var Renderer = function(sceneCanvas, bufferCanvas) {
     this.scene = sceneCanvas;
     this.buffer = bufferCanvas;
     this.snap = null;
@@ -81,7 +95,7 @@ var Engine = function(sceneCanvas, bufferCanvas) {
  * @param {*} h 
  * @param {*} color 
  */
-Engine.prototype.draw = function(x, y, w, h, color) {
+Renderer.prototype.draw = function(x, y, w, h, color) {
    this.buffer.draw(x, y, w, h, color);
 }
 
@@ -95,7 +109,7 @@ Engine.prototype.draw = function(x, y, w, h, color) {
  * @param {*} dx 
  * @param {*} dy 
  */
-Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
 }
 /**
@@ -106,7 +120,7 @@ Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
  * @param {*} w 
  * @param {*} h 
  */
-Engine.prototype.drawImage = function(image, x, y, w, h) {
+Renderer.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
 }
 
@@ -114,7 +128,7 @@ Engine.prototype.drawImage = function(image, x, y, w, h) {
  * Width of the engine's canvas
  * @return int
  */
-Engine.prototype.width = function() {
+Renderer.prototype.width = function() {
     return this.scene.width();
 }
 
@@ -122,7 +136,7 @@ Engine.prototype.width = function() {
  * Height of the engine's canvas
  * @return int
  */
-Engine.prototype.height = function() {
+Renderer.prototype.height = function() {
     return this.scene.height();
 }
 
@@ -130,16 +144,16 @@ Engine.prototype.height = function() {
  * Return the ImageData version of the whole engine's canvas
  * @return ImageData
  */
-Engine.prototype.captureScene = function() {
+Renderer.prototype.captureScene = function() {
     return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
 }
 
-Engine.prototype.clear = function() {
+Renderer.prototype.clear = function() {
     this.scene.clear();
     this.buffer.clear();
 }
 
-Engine.prototype.render = function() {
+Renderer.prototype.render = function() {
     // this.scene.clear();
     this.scene.drawImageData(
         this.buffer.c.getImageData(
@@ -149,14 +163,14 @@ Engine.prototype.render = function() {
     this.buffer.clear();
 }
 
-Engine.prototype.snapshot = function() {
+Renderer.prototype.snapshot = function() {
     return this.buffer.snapshot();
 }
 
-module.exports = Engine;
+module.exports = Renderer;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 var Canvas = function(canvas) {
@@ -233,10 +247,10 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  module.exports = Canvas;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Updater = __webpack_require__(3);
+var Updater = __webpack_require__(4);
 
 var Loop = function(fps, engine, startingMode)
 {
@@ -254,6 +268,8 @@ var Loop = function(fps, engine, startingMode)
     this.dataUpdater = new Updater("data");
     this.displayUpdater = new Updater("graphic");
     this.mode = startingMode;
+
+    this.startingConditions = [];
 };
 
 /**
@@ -271,9 +287,28 @@ Loop.prototype.pause = function() {
 }
 
 Loop.prototype.start = function() {
+    if (!this.canStart()) {
+        this.engine.scene.c.fillText("Loading...", 360, 295);            
+        setTimeout(this.start.bind(this), this.miF);
+        return;
+    }
+
     console.info("started");
-    setTimeout(function(){this.dataLoop(0);}.bind(this), 0);
-    setTimeout(function(){this.displayLoop(0);}.bind(this), 0);
+    setTimeout(function(){this.dataLoop(0);}.bind(this), 30);
+    setTimeout(function(){this.displayLoop(0);}.bind(this), 45);
+}
+
+Loop.prototype.addStartingConditions = function(conditions) {
+    this.startingConditions = conditions;
+}
+
+Loop.prototype.canStart = function() {
+    for (i = 0; i < this.startingConditions.length; i++) {
+        if (this.startingConditions[i]() === false) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -319,7 +354,7 @@ Loop.prototype.displayLoop = function(T) {
 module.exports = Loop;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 var Updater = function(name) {
@@ -345,6 +380,9 @@ Updater.prototype.update = function(mode, T, engine) {
 
     for (var i in n) {
         updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = -1;
+        }
         if (updSt == -1) {
             delete n[i];
             continue;
@@ -402,158 +440,392 @@ Updater.prototype.remove = function(mode, name) {
 module.exports = Updater;
 
 /***/ }),
-/* 4 */,
-/* 5 */,
-/* 6 */,
-/* 7 */,
-/* 8 */,
-/* 9 */,
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Graphic = __webpack_require__(0),
-    Canvas = __webpack_require__(1),
-    Loop = __webpack_require__(2),
-    Map = __webpack_require__(11),
-    Engine = __webpack_require__(12);
-
-document.addEventListener("DOMContentLoaded", function() {
-    var graphic = new Graphic(
-            new Canvas(document.querySelector("#board")),
-            new Canvas(document.querySelector('#buffer'))
-        ),
-        loop = new Loop(30, graphic),
-        engine = new Engine(
-            graphic,
-            loop
-        );
-
-    var map = new Map([
-        ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-        ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-        ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
-    ]);
-
-    map.loadMap();
-
-    engine.setMap(map);
-    engine.start();
-
-    loop.setMode("PLAY");
-    loop.start();
-
-});
-
-/***/ }),
-/* 11 */
+/* 5 */
 /***/ (function(module, exports) {
 
-var Map = function(matrix) {
-    this.matrix = matrix;
-    this.assets = [];
-    this.map = [];
-    this.assetLoadingIt = 0;
-    this.baseSrc = '../assets/map/tiles/';
+var Browser = function()
+{
+    this.focus = [];
+    this.blur = [];
+    this.documentVisibility = {
+        hidden: [],
+        visible: []
+    };
+
+    this.handleBehavior();
 }
 
-Map.prototype.loadAsset = function(path) {
-    this.assets[path] = new Image();
-    
-    this.assetLoadingIt++;
-    this.assets[path].onload = function() {
-        this.assetLoadingIt--;
-    }.bind(this);
+Browser.prototype.handleBehavior = function()
+{
+    var self = this;
 
-    this.assets[path].src = this.baseSrc + path + '.png';
-    this.assets[path].crossOrigin = "Anonymous";
+    window.onfocus = function(e) {self.focus.forEach(function(item) {item(e);});};
+    window.onblur = function(e) {self.blur.forEach(function(item) {item(e);});};
+    document.addEventListener('visibilitychange', function(e) {
+        if (document.visibilityState == "hidden") {
+            self.documentVisibility.hidden.forEach(function(item) {item(e);});
+            return ;
+        }
 
+        self.documentVisibility.visible.forEach(function(item) {item(e);});
+    });
+}
+
+Browser.prototype.onFocus = function(cb)
+{
+    this.focus.push(cb);
+    return this;
+}
+
+Browser.prototype.onBlur = function(cb)
+{
+    this.blur.push(cb);
+    return this;
+}
+
+Browser.prototype.onDocumentHidden = function(cb)
+{
+    this.documentVisibility.hidden.push(cb);
+    return this;    
+}
+
+Browser.prototype.onDocumentVisible = function(cb)
+{
+    this.documentVisibility.visible.push(cb);
+    return this;    
+}
+
+Browser.prototype.onReady = function(cb) {
+    document.addEventListener("DOMContentLoaded", cb);
+}
+
+module.exports = Browser;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+var Map = function(matrix, assets) {
+    this.matrix = matrix;
+    this.map = [];
+    this.assets = assets;
 }
 
 Map.prototype.loadMap = function() {
-    var imgPath = '';
-
     for (x = 0; x < this.matrix.length; x++) {
         this.map[x] = [];
         for (y = 0; y < this.matrix[x].length; y++) {
-            imgPath = this.matrix[x][y];
-            if (imgPath == null) {
-                this.map[x][y] = null;
-                continue;
-            }
-            if (!this.assets[imgPath]) {
-                this.loadAsset(imgPath);
-            }
-            this.map[x][y] = this.assets[imgPath];
+            this.map[x][y] = this.assets.get(this.matrix[x][y]);
         }
     }
-}
-
-Map.prototype.isLoaded = function() {
-    return this.assetLoadingIt == 0;
 }
 
 module.exports = Map;
 
 /***/ }),
-/* 12 */
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var CouldNotLoad = __webpack_require__(8);
+
+var Assets = function() {
+    this.assets = [];
+    this.stillLoadingIt = 0;
+}
+
+/**
+ * @param string name
+ * @param string path
+ * 
+ * loadImage starts the asynchronous loading of a single image
+ */
+Assets.prototype.loadImage = function(name, path) {
+    this.assets[name] = new Image();
+    
+    this.assetLoadingIt++;
+    this.assets[name].onload = function() {
+        this.assetLoadingIt--;
+    }.bind(this);
+
+    this.assets[name].src = path;
+    this.assets[name].crossOrigin = "Anonymous";
+}
+
+/**
+ * @param Object imgObject
+ * @return CouldNotLoad|null
+ * 
+ * loadImages loads an Object of images using the form:
+ * {"asset_name": "path_to_asset"}
+ */
+Assets.prototype.loadImages = function(imgObject) {
+    if (imgObject.constructor !== {}.constructor){
+        return new CouldNotLoad("Assets.loadImages: imgObject is not an Object");
+    }
+
+    for (var k in imgObject) {
+        if (!imgObject.hasOwnProperty(k)) {
+            continue;
+        }
+        this.loadImage(k, imgObject[k]);
+    }
+    
+    return null;
+}
+
+/**
+ * @return bool
+ * 
+ * hasFinishLoading returns the state of the assets loading
+ */
+Assets.prototype.hasFinishedLoading = function() {
+    return this.stillLoadingIt === 0;
+}
+
+/**
+ * @return Asset
+ */
+Assets.prototype.get = function(name) {
+    if (this.assets[name] == undefined) {
+        return null;
+    }
+
+    return this.assets[name];
+}
+
+module.exports = Assets;
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports) {
 
-var Engine = function(drawer, loopEngine) {
-    this.drawer = drawer;
-    this.loopEngine = loopEngine;
+var CouldNotLoad = function(msg) {
+    this.msg = msg;
+}
+
+CouldNotLoad.prototype.error = function() {
+    return "Could not Load: " + this.msg;
+}
+
+module.exports = CouldNotLoad;
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+var Isometric = function(renderer, loop, camera, config) {
+    this.renderer = renderer;
+    this.loop = loop;
     this.map = [];
+    this.camera = camera;
+    this.config = config;
 }
 
-Engine.prototype.start = function() {
-    this.loopEngine.displayUpdater.add("PLAY", this.displayMap.bind(this), "isometricEngineMapDisplay");
+Isometric.prototype.start = function(x, y) {
+    this.loop.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
 }
 
-Engine.prototype.setMap = function(map) {
+Isometric.prototype.setMap = function(map) {
     this.map = map;
 }
 
-Engine.prototype.displayMap = function() {
-    var tW = 64,
-        tH = 64,
-        startX = this.drawer.width() / 2,
-        cX = 0,
-        cY = 0;
-
-    if (!this.map.isLoaded()) {
-        this.drawer.scene.c.fillText("Loading...", 360, 295);
-        return 0;
-    }
-    
-    for (j = 0; j < this.map.map.length; j++) {
-        for (x = 0; x < this.map.map[j].length; x++) {
-            if (!this.map.map[j][x]) {
+Isometric.prototype.renderMap = function() {
+    for (y = 0; y < this.map.map.length; y++) {
+        for (x = 0; x < this.map.map[y].length; x++) {
+            if (!this.map.map[y][x]) {
                 continue;
             }
-            cX = startX + (x * tW) - (x * 32);
-            cY = (j * 16) + (x * 16);
-            this.drawer.drawImage(this.map.map[j][x], cX, cY, tW, tH);
+            this.drawImage(this.map.map[y][x], x, y);
         }
-        startX -= 32;
     }
     return 1;
 }
 
-module.exports = Engine;
+Isometric.prototype.drawImage = function(img, x, y) {
+    var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
+    this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
+}
+
+module.exports = Isometric;
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var config = __webpack_require__(0);
+
+var Coordinates = function(cX, cY) {
+    this.start = {};
+    if (cX === undefined || cY === undefined) {
+        cX = 0;
+        cY = 0;
+    }
+    this.cX = cX;
+    this.cY = cY;
+}
+
+Coordinates.prototype.computeStart = function() {
+    this.start = {
+        y: (config.canvasH / 2) - (this.cY * (config.tileTopH / 2)),
+        x: (config.canvasW / 2) - (this.cX * (config.tileTopW / 2))
+    }
+    return this;
+}
+
+Coordinates.prototype.getStart = function () {
+    return this.start;
+}
+
+Coordinates.prototype.fromTileCoordinates = function(x, y) {
+    var decalX = config.tileTopW / 2,
+        decalY = config.tileTopH / 2;   
+
+    return {
+        x: this.start.x + (x * config.tileTopW) - (x * decalX) - (decalX * y),
+        y: this.start.y + (y * decalY) + (x * decalY)
+    }
+}
+
+module.exports = Coordinates;
+
+/***/ }),
+/* 11 */,
+/* 12 */,
+/* 13 */,
+/* 14 */,
+/* 15 */,
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Renderer = __webpack_require__(1),
+    Canvas = __webpack_require__(2),
+    Loop = __webpack_require__(3),
+    Map = __webpack_require__(6),
+    Browser = __webpack_require__(5),
+    Assets = __webpack_require__(7),
+    Camera = __webpack_require__(17),
+    config = __webpack_require__(0),
+    Coord = __webpack_require__(10),
+    Engine = __webpack_require__(9);
+
+(new Browser()).onReady(function() {
+    var camera = new Camera(new Coord(7, 9)),
+        renderer = new Renderer(
+            new Canvas(document.querySelector("#board")),
+            new Canvas(document.querySelector('#buffer'))
+        ),zz
+        loop = new Loop(30, renderer),
+        engine = new Engine(
+            renderer,
+            loop,
+            camera,
+            config
+        ),
+        assets = new Assets();
+    
+    var err = assets.loadImages(
+        {
+            "0_0": "../assets/map/tiles/0_0.png",
+            "0_1": "../assets/map/tiles/0_1.png",
+            "building1": "../assets/building/building1.png"
+        }
+    );
+
+    if (err != null) {
+        console.log(err.error());
+    }
+
+    var map = new Map([
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
+            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
+        ],
+        assets
+    );
+
+    engine.setMap(map);
+    engine.start();
+
+    map.loadMap();
+
+    loop.setMode("PLAY");
+    loop.addStartingConditions([
+        assets.hasFinishedLoading.bind(assets)
+    ]);
+    loop.start();
+
+    loop.displayUpdater.add("PLAY", function() {
+        engine.drawImage(assets.get("building1"), 1, 3);
+        engine.drawImage(assets.get("building1"), 3, 6);
+        engine.drawImage(assets.get("building1"), 6, 2);
+        engine.drawImage(assets.get("building1"), 14, 9);
+        engine.drawImage(assets.get("building1"), 9, 14);
+        engine.drawImage(assets.get("building1"), 10, 10);
+        return 1;
+        // return 0;
+    }, "building1")
+
+    var cameraTileMove = 0.5;
+    var pressFunc = {
+        "z": function(){camera.addY(-cameraTileMove)},
+        "s": function(){camera.addY(cameraTileMove)},
+        "q": function(){camera.addX(-cameraTileMove)},
+        "d": function(){camera.addX(cameraTileMove)}
+    }
+    document.addEventListener("keydown", function(e) {
+        if (pressFunc.hasOwnProperty(e.key)) {
+            pressFunc[e.key]();
+        }
+    });
+});
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
+
+var Camera = function(coord) {
+    this.coord = coord;
+    this.coord.computeStart();
+}
+
+Camera.prototype.setX = function(x) {
+    this.coord.cX = x;
+    this.coord.computeStart();
+}
+
+Camera.prototype.setY = function(y) {
+    this.coord.cY = y;
+    this.coord.computeStart();
+}
+
+Camera.prototype.addX = function(x) {
+    this.setX(this.coord.cX + x)
+}
+
+Camera.prototype.addY = function(y) {
+    this.setY(this.coord.cY + y)
+}
+
+Camera.prototype.getCoordinates = function () {
+    return this.coord;
+}
+
+module.exports = Camera;
 
 /***/ })
 /******/ ]);

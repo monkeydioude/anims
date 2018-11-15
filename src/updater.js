@@ -21,6 +21,9 @@ Updater.prototype.update = function(mode, T, engine) {
 
     for (var i in n) {
         updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = -1;
+        }
         if (updSt == -1) {
             delete n[i];
             continue;

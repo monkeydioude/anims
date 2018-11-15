@@ -1,4 +1,4 @@
-var Engine = function(sceneCanvas, bufferCanvas) {
+var Renderer = function(sceneCanvas, bufferCanvas) {
     this.scene = sceneCanvas;
     this.buffer = bufferCanvas;
     this.snap = null;
@@ -12,7 +12,7 @@ var Engine = function(sceneCanvas, bufferCanvas) {
  * @param {*} h 
  * @param {*} color 
  */
-Engine.prototype.draw = function(x, y, w, h, color) {
+Renderer.prototype.draw = function(x, y, w, h, color) {
    this.buffer.draw(x, y, w, h, color);
 }
 
@@ -26,7 +26,7 @@ Engine.prototype.draw = function(x, y, w, h, color) {
  * @param {*} dx 
  * @param {*} dy 
  */
-Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
 }
 /**
@@ -37,7 +37,7 @@ Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
  * @param {*} w 
  * @param {*} h 
  */
-Engine.prototype.drawImage = function(image, x, y, w, h) {
+Renderer.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
 }
 
@@ -45,7 +45,7 @@ Engine.prototype.drawImage = function(image, x, y, w, h) {
  * Width of the engine's canvas
  * @return int
  */
-Engine.prototype.width = function() {
+Renderer.prototype.width = function() {
     return this.scene.width();
 }
 
@@ -53,7 +53,7 @@ Engine.prototype.width = function() {
  * Height of the engine's canvas
  * @return int
  */
-Engine.prototype.height = function() {
+Renderer.prototype.height = function() {
     return this.scene.height();
 }
 
@@ -61,16 +61,16 @@ Engine.prototype.height = function() {
  * Return the ImageData version of the whole engine's canvas
  * @return ImageData
  */
-Engine.prototype.captureScene = function() {
+Renderer.prototype.captureScene = function() {
     return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
 }
 
-Engine.prototype.clear = function() {
+Renderer.prototype.clear = function() {
     this.scene.clear();
     this.buffer.clear();
 }
 
-Engine.prototype.render = function() {
+Renderer.prototype.render = function() {
     // this.scene.clear();
     this.scene.drawImageData(
         this.buffer.c.getImageData(
@@ -80,8 +80,8 @@ Engine.prototype.render = function() {
     this.buffer.clear();
 }
 
-Engine.prototype.snapshot = function() {
+Renderer.prototype.snapshot = function() {
     return this.buffer.snapshot();
 }
 
-module.exports = Engine;
+module.exports = Renderer;

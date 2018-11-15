@@ -16,6 +16,8 @@ var Loop = function(fps, engine, startingMode)
     this.dataUpdater = new Updater("data");
     this.displayUpdater = new Updater("graphic");
     this.mode = startingMode;
+
+    this.startingConditions = [];
 };
 
 /**
@@ -33,9 +35,28 @@ Loop.prototype.pause = function() {
 }
 
 Loop.prototype.start = function() {
+    if (!this.canStart()) {
+        this.engine.scene.c.fillText("Loading...", 360, 295);            
+        setTimeout(this.start.bind(this), this.miF);
+        return;
+    }
+
     console.info("started");
-    setTimeout(function(){this.dataLoop(0);}.bind(this), 0);
-    setTimeout(function(){this.displayLoop(0);}.bind(this), 0);
+    setTimeout(function(){this.dataLoop(0);}.bind(this), 30);
+    setTimeout(function(){this.displayLoop(0);}.bind(this), 45);
+}
+
+Loop.prototype.addStartingConditions = function(conditions) {
+    this.startingConditions = conditions;
+}
+
+Loop.prototype.canStart = function() {
+    for (i = 0; i < this.startingConditions.length; i++) {
+        if (this.startingConditions[i]() === false) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**

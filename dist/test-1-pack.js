@@ -60,14 +60,15 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 11);
 /******/ })
 /************************************************************************/
 /******/ ([
-/* 0 */
+/* 0 */,
+/* 1 */
 /***/ (function(module, exports) {
 
-var Engine = function(sceneCanvas, bufferCanvas) {
+var Renderer = function(sceneCanvas, bufferCanvas) {
     this.scene = sceneCanvas;
     this.buffer = bufferCanvas;
     this.snap = null;
@@ -81,7 +82,7 @@ var Engine = function(sceneCanvas, bufferCanvas) {
  * @param {*} h 
  * @param {*} color 
  */
-Engine.prototype.draw = function(x, y, w, h, color) {
+Renderer.prototype.draw = function(x, y, w, h, color) {
    this.buffer.draw(x, y, w, h, color);
 }
 
@@ -95,7 +96,7 @@ Engine.prototype.draw = function(x, y, w, h, color) {
  * @param {*} dx 
  * @param {*} dy 
  */
-Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
 }
 /**
@@ -106,7 +107,7 @@ Engine.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
  * @param {*} w 
  * @param {*} h 
  */
-Engine.prototype.drawImage = function(image, x, y, w, h) {
+Renderer.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image, x, y, w, h);
 }
 
@@ -114,7 +115,7 @@ Engine.prototype.drawImage = function(image, x, y, w, h) {
  * Width of the engine's canvas
  * @return int
  */
-Engine.prototype.width = function() {
+Renderer.prototype.width = function() {
     return this.scene.width();
 }
 
@@ -122,7 +123,7 @@ Engine.prototype.width = function() {
  * Height of the engine's canvas
  * @return int
  */
-Engine.prototype.height = function() {
+Renderer.prototype.height = function() {
     return this.scene.height();
 }
 
@@ -130,16 +131,16 @@ Engine.prototype.height = function() {
  * Return the ImageData version of the whole engine's canvas
  * @return ImageData
  */
-Engine.prototype.captureScene = function() {
+Renderer.prototype.captureScene = function() {
     return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
 }
 
-Engine.prototype.clear = function() {
+Renderer.prototype.clear = function() {
     this.scene.clear();
     this.buffer.clear();
 }
 
-Engine.prototype.render = function() {
+Renderer.prototype.render = function() {
     // this.scene.clear();
     this.scene.drawImageData(
         this.buffer.c.getImageData(
@@ -149,14 +150,14 @@ Engine.prototype.render = function() {
     this.buffer.clear();
 }
 
-Engine.prototype.snapshot = function() {
+Renderer.prototype.snapshot = function() {
     return this.buffer.snapshot();
 }
 
-module.exports = Engine;
+module.exports = Renderer;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 var Canvas = function(canvas) {
@@ -233,10 +234,10 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
  module.exports = Canvas;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Updater = __webpack_require__(3);
+var Updater = __webpack_require__(4);
 
 var Loop = function(fps, engine, startingMode)
 {
@@ -254,6 +255,8 @@ var Loop = function(fps, engine, startingMode)
     this.dataUpdater = new Updater("data");
     this.displayUpdater = new Updater("graphic");
     this.mode = startingMode;
+
+    this.startingConditions = [];
 };
 
 /**
@@ -271,9 +274,28 @@ Loop.prototype.pause = function() {
 }
 
 Loop.prototype.start = function() {
+    if (!this.canStart()) {
+        this.engine.scene.c.fillText("Loading...", 360, 295);            
+        setTimeout(this.start.bind(this), this.miF);
+        return;
+    }
+
     console.info("started");
-    setTimeout(function(){this.dataLoop(0);}.bind(this), 0);
-    setTimeout(function(){this.displayLoop(0);}.bind(this), 0);
+    setTimeout(function(){this.dataLoop(0);}.bind(this), 30);
+    setTimeout(function(){this.displayLoop(0);}.bind(this), 45);
+}
+
+Loop.prototype.addStartingConditions = function(conditions) {
+    this.startingConditions = conditions;
+}
+
+Loop.prototype.canStart = function() {
+    for (i = 0; i < this.startingConditions.length; i++) {
+        if (this.startingConditions[i]() === false) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -319,7 +341,7 @@ Loop.prototype.displayLoop = function(T) {
 module.exports = Loop;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 var Updater = function(name) {
@@ -345,6 +367,9 @@ Updater.prototype.update = function(mode, T, engine) {
 
     for (var i in n) {
         updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = -1;
+        }
         if (updSt == -1) {
             delete n[i];
             continue;
@@ -402,18 +427,229 @@ Updater.prototype.remove = function(mode, name) {
 module.exports = Updater;
 
 /***/ }),
-/* 4 */
+/* 5 */
+/***/ (function(module, exports) {
+
+var Browser = function()
+{
+    this.focus = [];
+    this.blur = [];
+    this.documentVisibility = {
+        hidden: [],
+        visible: []
+    };
+
+    this.handleBehavior();
+}
+
+Browser.prototype.handleBehavior = function()
+{
+    var self = this;
+
+    window.onfocus = function(e) {self.focus.forEach(function(item) {item(e);});};
+    window.onblur = function(e) {self.blur.forEach(function(item) {item(e);});};
+    document.addEventListener('visibilitychange', function(e) {
+        if (document.visibilityState == "hidden") {
+            self.documentVisibility.hidden.forEach(function(item) {item(e);});
+            return ;
+        }
+
+        self.documentVisibility.visible.forEach(function(item) {item(e);});
+    });
+}
+
+Browser.prototype.onFocus = function(cb)
+{
+    this.focus.push(cb);
+    return this;
+}
+
+Browser.prototype.onBlur = function(cb)
+{
+    this.blur.push(cb);
+    return this;
+}
+
+Browser.prototype.onDocumentHidden = function(cb)
+{
+    this.documentVisibility.hidden.push(cb);
+    return this;    
+}
+
+Browser.prototype.onDocumentVisible = function(cb)
+{
+    this.documentVisibility.visible.push(cb);
+    return this;    
+}
+
+Browser.prototype.onReady = function(cb) {
+    document.addEventListener("DOMContentLoaded", cb);
+}
+
+module.exports = Browser;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+var Map = function(matrix, assets) {
+    this.matrix = matrix;
+    this.map = [];
+    this.assets = assets;
+}
+
+Map.prototype.loadMap = function() {
+    for (x = 0; x < this.matrix.length; x++) {
+        this.map[x] = [];
+        for (y = 0; y < this.matrix[x].length; y++) {
+            this.map[x][y] = this.assets.get(this.matrix[x][y]);
+        }
+    }
+}
+
+module.exports = Map;
+
+/***/ }),
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Graphic = __webpack_require__(0),
-    Canvas = __webpack_require__(1),
-    Loop = __webpack_require__(2),
-    Logger = __webpack_require__(5),
-    Browser = __webpack_require__(6),
-    Stack = __webpack_require__(7),
-    Color = __webpack_require__(9),
-    Map = __webpack_require__(11),
-    Engine = __webpack_require__(12);
+var CouldNotLoad = __webpack_require__(8);
+
+var Assets = function() {
+    this.assets = [];
+    this.stillLoadingIt = 0;
+}
+
+/**
+ * @param string name
+ * @param string path
+ * 
+ * loadImage starts the asynchronous loading of a single image
+ */
+Assets.prototype.loadImage = function(name, path) {
+    this.assets[name] = new Image();
+    
+    this.assetLoadingIt++;
+    this.assets[name].onload = function() {
+        this.assetLoadingIt--;
+    }.bind(this);
+
+    this.assets[name].src = path;
+    this.assets[name].crossOrigin = "Anonymous";
+}
+
+/**
+ * @param Object imgObject
+ * @return CouldNotLoad|null
+ * 
+ * loadImages loads an Object of images using the form:
+ * {"asset_name": "path_to_asset"}
+ */
+Assets.prototype.loadImages = function(imgObject) {
+    if (imgObject.constructor !== {}.constructor){
+        return new CouldNotLoad("Assets.loadImages: imgObject is not an Object");
+    }
+
+    for (var k in imgObject) {
+        if (!imgObject.hasOwnProperty(k)) {
+            continue;
+        }
+        this.loadImage(k, imgObject[k]);
+    }
+    
+    return null;
+}
+
+/**
+ * @return bool
+ * 
+ * hasFinishLoading returns the state of the assets loading
+ */
+Assets.prototype.hasFinishedLoading = function() {
+    return this.stillLoadingIt === 0;
+}
+
+/**
+ * @return Asset
+ */
+Assets.prototype.get = function(name) {
+    if (this.assets[name] == undefined) {
+        return null;
+    }
+
+    return this.assets[name];
+}
+
+module.exports = Assets;
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+var CouldNotLoad = function(msg) {
+    this.msg = msg;
+}
+
+CouldNotLoad.prototype.error = function() {
+    return "Could not Load: " + this.msg;
+}
+
+module.exports = CouldNotLoad;
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+var Isometric = function(renderer, loop, camera, config) {
+    this.renderer = renderer;
+    this.loop = loop;
+    this.map = [];
+    this.camera = camera;
+    this.config = config;
+}
+
+Isometric.prototype.start = function(x, y) {
+    this.loop.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
+}
+
+Isometric.prototype.setMap = function(map) {
+    this.map = map;
+}
+
+Isometric.prototype.renderMap = function() {
+    for (y = 0; y < this.map.map.length; y++) {
+        for (x = 0; x < this.map.map[y].length; x++) {
+            if (!this.map.map[y][x]) {
+                continue;
+            }
+            this.drawImage(this.map.map[y][x], x, y);
+        }
+    }
+    return 1;
+}
+
+Isometric.prototype.drawImage = function(img, x, y) {
+    var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
+    this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
+}
+
+module.exports = Isometric;
+
+/***/ }),
+/* 10 */,
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Graphic = __webpack_require__(1),
+    Canvas = __webpack_require__(2),
+    Loop = __webpack_require__(3),
+    Logger = __webpack_require__(12),
+    Browser = __webpack_require__(5),
+    Stack = __webpack_require__(13),
+    Color = __webpack_require__(15),
+    Map = __webpack_require__(6),
+    Assets = __webpack_require__(7),
+    Engine = __webpack_require__(9);
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -440,7 +676,19 @@ document.addEventListener("DOMContentLoaded", function() {
         engine = new Engine(
             graphic,
             loop
+        ),
+        assets = new Assets();
+
+        var err = assets.loadImages(
+            {
+                "0_0": "../assets/map/tiles/0_0.png",
+                "0_1": "../assets/map/tiles/0_1.png",
+            }
         );
+    
+        loop.addStartingConditions([
+            assets.hasFinishedLoading.bind(assets)
+        ]);
 
         var map = new Map([
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
@@ -461,7 +709,7 @@ document.addEventListener("DOMContentLoaded", function() {
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
-        ]);
+        ], assets);
     
         map.loadMap();
     
@@ -617,7 +865,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /***/ }),
-/* 5 */
+/* 12 */
 /***/ (function(module, exports) {
 
 var Logger = function(type, shouldDisplayLogs) {
@@ -649,68 +897,10 @@ Logger.prototype.toggleLogs = function() {
 module.exports = Logger;
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-var Browser = function()
-{
-    this.focus = [];
-    this.blur = [];
-    this.documentVisibility = {
-        hidden: [],
-        visible: []
-    };
-
-    this.handleBehavior();
-}
-
-Browser.prototype.handleBehavior = function()
-{
-    var self = this;
-
-    window.onfocus = function(e) {self.focus.forEach(function(item) {item(e);});};
-    window.onblur = function(e) {self.blur.forEach(function(item) {item(e);});};
-    document.addEventListener('visibilitychange', function(e) {
-        if (document.visibilityState == "hidden") {
-            self.documentVisibility.hidden.forEach(function(item) {item(e);});
-            return ;
-        }
-
-        self.documentVisibility.visible.forEach(function(item) {item(e);});
-    });
-}
-
-Browser.prototype.onFocus = function(cb)
-{
-    this.focus.push(cb);
-    return this;
-}
-
-Browser.prototype.onBlur = function(cb)
-{
-    this.blur.push(cb);
-    return this;
-}
-
-Browser.prototype.onDocumentHidden = function(cb)
-{
-    this.documentVisibility.hidden.push(cb);
-    return this;    
-}
-
-Browser.prototype.onDocumentVisible = function(cb)
-{
-    this.documentVisibility.visible.push(cb);
-    return this;    
-}
-
-module.exports = Browser;
-
-/***/ }),
-/* 7 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Pixel = __webpack_require__(8);
+var Pixel = __webpack_require__(14);
 
 var Stack = function(x, y, color, m) {
     this.x = x;
@@ -764,7 +954,7 @@ Stack.prototype.computeMatrix = function(m) {
 module.exports = Stack;
 
 /***/ }),
-/* 8 */
+/* 14 */
 /***/ (function(module, exports) {
 
 var Pixel = function(x, y, color) {
@@ -780,7 +970,7 @@ Pixel.prototype.render = function(engine) {
 module.exports = Pixel;
 
 /***/ }),
-/* 9 */
+/* 15 */
 /***/ (function(module, exports) {
 
 var Color = function(r, g, b, a) {
@@ -798,103 +988,6 @@ Color.prototype.RGBA = function() {
 }
 
 module.exports = Color;
-
-/***/ }),
-/* 10 */,
-/* 11 */
-/***/ (function(module, exports) {
-
-var Map = function(matrix) {
-    this.matrix = matrix;
-    this.assets = [];
-    this.map = [];
-    this.assetLoadingIt = 0;
-    this.baseSrc = '../assets/map/tiles/';
-}
-
-Map.prototype.loadAsset = function(path) {
-    this.assets[path] = new Image();
-    
-    this.assetLoadingIt++;
-    this.assets[path].onload = function() {
-        this.assetLoadingIt--;
-    }.bind(this);
-
-    this.assets[path].src = this.baseSrc + path + '.png';
-    this.assets[path].crossOrigin = "Anonymous";
-
-}
-
-Map.prototype.loadMap = function() {
-    var imgPath = '';
-
-    for (x = 0; x < this.matrix.length; x++) {
-        this.map[x] = [];
-        for (y = 0; y < this.matrix[x].length; y++) {
-            imgPath = this.matrix[x][y];
-            if (imgPath == null) {
-                this.map[x][y] = null;
-                continue;
-            }
-            if (!this.assets[imgPath]) {
-                this.loadAsset(imgPath);
-            }
-            this.map[x][y] = this.assets[imgPath];
-        }
-    }
-}
-
-Map.prototype.isLoaded = function() {
-    return this.assetLoadingIt == 0;
-}
-
-module.exports = Map;
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports) {
-
-var Engine = function(drawer, loopEngine) {
-    this.drawer = drawer;
-    this.loopEngine = loopEngine;
-    this.map = [];
-}
-
-Engine.prototype.start = function() {
-    this.loopEngine.displayUpdater.add("PLAY", this.displayMap.bind(this), "isometricEngineMapDisplay");
-}
-
-Engine.prototype.setMap = function(map) {
-    this.map = map;
-}
-
-Engine.prototype.displayMap = function() {
-    var tW = 64,
-        tH = 64,
-        startX = this.drawer.width() / 2,
-        cX = 0,
-        cY = 0;
-
-    if (!this.map.isLoaded()) {
-        this.drawer.scene.c.fillText("Loading...", 360, 295);
-        return 0;
-    }
-    
-    for (j = 0; j < this.map.map.length; j++) {
-        for (x = 0; x < this.map.map[j].length; x++) {
-            if (!this.map.map[j][x]) {
-                continue;
-            }
-            cX = startX + (x * tW) - (x * 32);
-            cY = (j * 16) + (x * 16);
-            this.drawer.drawImage(this.map.map[j][x], cX, cY, tW, tH);
-        }
-        startX -= 32;
-    }
-    return 1;
-}
-
-module.exports = Engine;
 
 /***/ })
 /******/ ]);
