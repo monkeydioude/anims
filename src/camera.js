@@ -1,19 +1,19 @@
 var Camera = function(coord) {
     this.coord = coord;
-    this.coord.computeStart();
+    this.coord.computeCenter();
 }
 
 Camera.prototype.setX = function(x) {
-    this.set(x, this.coord.cY);
+    this.set(x, this.coord.icY);
 }
 
 Camera.prototype.setY = function(y) {
-    this.set(this.coord.cX, y);
+    this.set(this.coord.icX, y);
 }
 Camera.prototype.set = function(x, y) {
-    this.coord.cX = x;
-    this.coord.cY = y;
-    this.coord.computeStart();
+    this.coord.icX = x;
+    this.coord.icY = y;
+    this.coord.computeCenter();
 }
 
 Camera.prototype.addX = function(x) {
@@ -25,9 +25,9 @@ Camera.prototype.addY = function(y) {
 }
 
 Camera.prototype.add = function(x, y) {
-    this.coord.cX += x;
-    this.coord.cY += y;
-    this.coord.computeStart();
+    this.coord.icX += x;
+    this.coord.icY += y;
+    this.coord.computeCenter();
 }
 Camera.prototype.getCoordinates = function () {
     return this.coord;

@@ -10,7 +10,13 @@ var Renderer = require('../src/canvas/renderer'),
     Engine = require('../src/isometric/isometric');
 
 (new Browser()).onReady(function() {
-    var camera = new Camera(new Coord(2.5, 6.5)),
+    var camera = new Camera(
+        new Coord(
+            2.5,
+            6.5,
+            config.canvasMX,
+            config.canvasMY
+        )),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
@@ -102,12 +108,12 @@ var Renderer = require('../src/canvas/renderer'),
             camera.addX(cameraTileMove)
         },
         " ": function() {
-            var label = "building-" + camera.coord.cX + camera.coord.cY;
+            var label = "building-" + camera.coord.icX + camera.coord.icY;
             if (buildings.hasOwnProperty(label)){
                 return
             }
             buildings[label] = {
-                x: camera.coord.cX,
+                x: camera.coord.icX,
                 y: camera.coord.cY
             }
 

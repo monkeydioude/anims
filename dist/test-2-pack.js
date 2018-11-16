@@ -612,6 +612,16 @@ module.exports = CouldNotLoad;
 var Updater = __webpack_require__(0),
     Objects = __webpack_require__(9);
 
+/**
+ * Isometric is the main engine managing the isometric rendering of elements.
+ * Must be used instead of the canvas Renderer directly
+ * 
+ * @param {Renderer} renderer 
+ * @param {Updater} displayUpdater 
+ * @param {Updater} dataUpdater 
+ * @param {Camera} camera 
+ * @param {config} config 
+ */
 var Isometric = function(renderer, displayUpdater, dataUpdater, camera, config) {
     this.renderer = renderer;
     this.displayUpdater = displayUpdater;
@@ -623,6 +633,10 @@ var Isometric = function(renderer, displayUpdater, dataUpdater, camera, config) 
     this.objects = new Objects();
 }
 
+/**
+ * start must be run after Isometric engine's declaration in order
+ * to work.
+ */
 Isometric.prototype.start = function() {
     this.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
     this.dataUpdater.add("PLAY", this.updateObjectPositions.bind(this), "isometricUpdateObjectPosition");
@@ -633,6 +647,12 @@ Isometric.prototype.setMap = function(map) {
     this.map = map;
 }
 
+/**
+ * renderMap is called by the displayUpdater of the Loop to renders the map.
+ * Might change to be working with the "renderObjects" function
+ * 
+ * @return {int}
+ */
 Isometric.prototype.renderMap = function() {
     for (y = 0; y < this.map.map.length; y++) {
         for (x = 0; x < this.map.map[y].length; x++) {
@@ -645,6 +665,13 @@ Isometric.prototype.renderMap = function() {
     return 1;
 }
 
+/**
+ * renderObjects is called by the displayUpdater of the Loop to renders various objects on the scene.
+ * Use {x:y} coordinates to place the objects and 'z' value to determinate order of display on a same 
+ * {x:y} coordinates.
+ * 
+ * @return {int}
+ */
 Isometric.prototype.renderObjects = function() {
     var obj = null;
     for (var x in this.objects.objects) {
@@ -663,18 +690,32 @@ Isometric.prototype.renderObjects = function() {
     }
     return 1;
 }
-
+/**
+ * updateObjectPositions is called by the dataUpdater of the Loop.
+ * Triggers the updates contained in the objectUpdater
+ * 
+ * @param {int} T amount of seconds passed from last Loop iteration
+ */
 Isometric.prototype.updateObjectPositions = function(T) {
     this.objects = new Objects();
+    // Object entity passed in every update callbacks
     this.objectUpdater.update("PLAY", T, this.objects);
     return 1;
 }
 
+/**
+ * drawImage draws an image on the scene using isometric {x:y} coordinates
+ * 
+ * @param {Image} img
+ * @param int x
+ * @param int y
+ */
 Isometric.prototype.drawImage = function(img, x, y) {
     if (img === undefined || img === null) {
         return 1;
     }
     var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
+    //coords contain canvas {x:y} coordinates
     this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
 }
  
@@ -775,7 +816,13 @@ var Renderer = __webpack_require__(1),
     Engine = __webpack_require__(8);
 
 (new Browser()).onReady(function() {
-    var camera = new Camera(new Coord(2.5, 6.5)),
+    var camera = new Camera(
+        new Coord(
+            2.5,
+            6.5,
+            config.canvasMX,
+            config.canvasMY
+        )),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
@@ -867,12 +914,12 @@ var Renderer = __webpack_require__(1),
             camera.addX(cameraTileMove)
         },
         " ": function() {
-            var label = "building-" + camera.coord.cX + camera.coord.cY;
+            var label = "building-" + camera.coord.icX + camera.coord.icY;
             if (buildings.hasOwnProperty(label)){
                 return
             }
             buildings[label] = {
-                x: camera.coord.cX,
+                x: camera.coord.icX,
                 y: camera.coord.cY
             }
 
@@ -894,20 +941,20 @@ var Renderer = __webpack_require__(1),
 
 var Camera = function(coord) {
     this.coord = coord;
-    this.coord.computeStart();
+    this.coord.computeCenter();
 }
 
 Camera.prototype.setX = function(x) {
-    this.set(x, this.coord.cY);
+    this.set(x, this.coord.icY);
 }
 
 Camera.prototype.setY = function(y) {
-    this.set(this.coord.cX, y);
+    this.set(this.coord.icX, y);
 }
 Camera.prototype.set = function(x, y) {
-    this.coord.cX = x;
-    this.coord.cY = y;
-    this.coord.computeStart();
+    this.coord.icX = x;
+    this.coord.icY = y;
+    this.coord.computeCenter();
 }
 
 Camera.prototype.addX = function(x) {
@@ -919,9 +966,9 @@ Camera.prototype.addY = function(y) {
 }
 
 Camera.prototype.add = function(x, y) {
-    this.coord.cX += x;
-    this.coord.cY += y;
-    this.coord.computeStart();
+    this.coord.icX += x;
+    this.coord.icY += y;
+    this.coord.computeCenter();
 }
 Camera.prototype.getCoordinates = function () {
     return this.coord;
@@ -935,23 +982,49 @@ module.exports = Camera;
 
 var config = __webpack_require__(10);
 
-var Coordinates = function(cX, cY) {
+/**
+ * Coordinates is used to convert isometric's {x:y} coordinates
+ * into Canvas' {x:y} coordinates.
+ * Can add Camera coordinates in the conversion.
+ * 
+ * {icX:icY} describes which {x:y} isometric coordinates the Camera looks at.
+ * 
+ * {ccX:ccY} describes where the Camera looks at (most likely the center) will be drawn on the canvas.
+ * 
+ * @param {int} icX isometric X coordinates of the Camera
+ * @param {int} icY isometric Y coordinates of the Camera
+ * @param {int} ccX canvas X coordinates where the Camera looks at will be drawn
+ * @param {int} ccY canvas Y coordinates where the Camera looks at will be drawn
+ */
+var Coordinates = function(icX, icY, ccX, ccY) {
     this.start = {
-        x: config.canvasMX,
-        y: config.canvasMY
+        x: 0,
+        y: 0
     };
-    if (cX === undefined || cY === undefined) {
-        cX = 0;
-        cY = 0;
+    if (icX === undefined || icY === undefined) {
+        icX = 0;
+        icY = 0;
     }
-    this.cX = cX;
-    this.cY = cY;
+    if (ccX === undefined || ccY === undefined) {
+        ccX = 0;
+        ccY = 0;
+    }
+    this.icX = icX;
+    this.icY = icY;
+    this.ccX = ccX;
+    this.ccY = ccY;
 }
 
-Coordinates.prototype.computeStart = function() {
+/**
+ * computeCenter computes icX & icY with ccX & ccY to determine
+ * where the graphic engine will start drawing the isometric grid.
+ * 
+ * @return {this}
+ */
+Coordinates.prototype.computeCenter = function() {
     this.start = {
-        x: config.canvasMX - config.isoDecalX + ((this.cY - this.cX) * config.isoDecalX),
-        y: config.canvasMY - ((this.cX + this.cY) * config.isoDecalY)
+        x: this.ccX - config.isoDecalX + ((this.icY - this.icX) * config.isoDecalX),
+        y: this.ccY - ((this.icX + this.icY) * config.isoDecalY)
     }
     return this;
 }
@@ -960,6 +1033,13 @@ Coordinates.prototype.getStart = function () {
     return this.start;
 }
 
+/**
+ * fromTileCoordinates computes and returns the canvas {x:y} coordinates
+ * of an isometric tile, from its isometric {x:y} coordinates.
+ * 
+ * @param {int} x
+ * @param {int} y
+ */
 Coordinates.prototype.fromTileCoordinates = function(x, y) {
     return {
         x: this.start.x + (x * config.tileTopW) - ((x + y) * config.isoDecalX),
