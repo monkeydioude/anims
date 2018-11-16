@@ -107,6 +107,12 @@ var Renderer = require('../src/canvas/renderer'),
         "d": function(){
             camera.addX(cameraTileMove)
         },
+        "w":  function(){
+            camera.addY(-cameraTileMove)
+        },
+        "a": function(){
+            camera.addX(-cameraTileMove)
+        },
         " ": function() {
             var label = "building-" + camera.coord.icX + camera.coord.icY;
             if (buildings.hasOwnProperty(label)){
@@ -114,7 +120,7 @@ var Renderer = require('../src/canvas/renderer'),
             }
             buildings[label] = {
                 x: camera.coord.icX,
-                y: camera.coord.cY
+                y: camera.coord.icY
             }
 
             engine.objectUpdater.add("PLAY", function(T, objects) {

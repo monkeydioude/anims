@@ -913,6 +913,12 @@ var Renderer = __webpack_require__(1),
         "d": function(){
             camera.addX(cameraTileMove)
         },
+        "w":  function(){
+            camera.addY(-cameraTileMove)
+        },
+        "a": function(){
+            camera.addX(-cameraTileMove)
+        },
         " ": function() {
             var label = "building-" + camera.coord.icX + camera.coord.icY;
             if (buildings.hasOwnProperty(label)){
@@ -920,7 +926,7 @@ var Renderer = __webpack_require__(1),
             }
             buildings[label] = {
                 x: camera.coord.icX,
-                y: camera.coord.cY
+                y: camera.coord.icY
             }
 
             engine.objectUpdater.add("PLAY", function(T, objects) {
@@ -934,6 +940,7 @@ var Renderer = __webpack_require__(1),
         }
     });
 });
+
 
 /***/ }),
 /* 17 */
