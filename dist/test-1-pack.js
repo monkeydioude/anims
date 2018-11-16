@@ -498,27 +498,7 @@ Browser.prototype.onReady = function(cb) {
 module.exports = Browser;
 
 /***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-var Map = function(matrix, assets) {
-    this.matrix = matrix;
-    this.map = [];
-    this.assets = assets;
-}
-
-Map.prototype.loadMap = function() {
-    for (x = 0; x < this.matrix.length; x++) {
-        this.map[x] = [];
-        for (y = 0; y < this.matrix[x].length; y++) {
-            this.map[x][y] = this.assets.get(this.matrix[x][y]);
-        }
-    }
-}
-
-module.exports = Map;
-
-/***/ }),
+/* 5 */,
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -606,175 +586,8 @@ CouldNotLoad.prototype.error = function() {
 module.exports = CouldNotLoad;
 
 /***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Updater = __webpack_require__(0),
-    Objects = __webpack_require__(9);
-
-/**
- * Isometric is the main engine managing the isometric rendering of elements.
- * Must be used instead of the canvas Renderer directly
- * 
- * @param {Renderer} renderer 
- * @param {Updater} displayUpdater 
- * @param {Updater} dataUpdater 
- * @param {Camera} camera 
- * @param {config} config 
- */
-var Isometric = function(renderer, displayUpdater, dataUpdater, camera, config) {
-    this.renderer = renderer;
-    this.displayUpdater = displayUpdater;
-    this.dataUpdater = dataUpdater;
-    this.map = [];
-    this.camera = camera;
-    this.config = config;
-    this.objectUpdater = new Updater("iso");
-    this.objects = new Objects();
-}
-
-/**
- * start must be run after Isometric engine's declaration in order
- * to work.
- */
-Isometric.prototype.start = function() {
-    this.displayUpdater.add("PLAY", this.renderMap.bind(this), "isometricEngineMapDisplay");
-    this.dataUpdater.add("PLAY", this.updateObjectPositions.bind(this), "isometricUpdateObjectPosition");
-    this.displayUpdater.add("PLAY", this.renderObjects.bind(this), "isometricRenderObjects");
-}
-
-Isometric.prototype.setMap = function(map) {
-    this.map = map;
-}
-
-/**
- * renderMap is called by the displayUpdater of the Loop to renders the map.
- * Might change to be working with the "renderObjects" function
- * 
- * @return {int}
- */
-Isometric.prototype.renderMap = function() {
-    for (y = 0; y < this.map.map.length; y++) {
-        for (x = 0; x < this.map.map[y].length; x++) {
-            if (!this.map.map[y][x]) {
-                continue;
-            }
-            this.drawImage(this.map.map[y][x], x, y);
-        }
-    }
-    return 1;
-}
-
-/**
- * renderObjects is called by the displayUpdater of the Loop to renders various objects on the scene.
- * Use {x:y} coordinates to place the objects and 'z' value to determinate order of display on a same 
- * {x:y} coordinates.
- * 
- * @return {int}
- */
-Isometric.prototype.renderObjects = function() {
-    var obj = null;
-    for (var x in this.objects.objects) {
-        for (var y in this.objects.objects[x]) {
-            for (var z in this.objects.objects[x][y]) {
-                x = parseInt(x);
-                y = parseInt(y);
-                z = parseInt(z);
-                obj = this.objects.get(x, y, z);
-                if (!obj) {
-                    continue;
-                }
-                this.drawImage(obj, x, y);
-            }
-        }
-    }
-    return 1;
-}
-/**
- * updateObjectPositions is called by the dataUpdater of the Loop.
- * Triggers the updates contained in the objectUpdater
- * 
- * @param {int} T amount of seconds passed from last Loop iteration
- */
-Isometric.prototype.updateObjectPositions = function(T) {
-    this.objects = new Objects();
-    // Object entity passed in every update callbacks
-    this.objectUpdater.update("PLAY", T, this.objects);
-    return 1;
-}
-
-/**
- * drawImage draws an image on the scene using isometric {x:y} coordinates
- * 
- * @param {Image} img
- * @param int x
- * @param int y
- */
-Isometric.prototype.drawImage = function(img, x, y) {
-    if (img === undefined || img === null) {
-        return 1;
-    }
-    var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
-    //coords contain canvas {x:y} coordinates
-    this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
-}
- 
-module.exports = Isometric;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports) {
-
-var Objects = function() {
-    this.objects = [];
-}
-
-Objects.prototype.exists = function(x, y, z) {
-    return this.objects[x] != undefined
-        && Array.isArray(this.objects[x])
-        && this.objects[x][y] != undefined
-        && Array.isArray(this.objects[x][y])
-        && this.objects[x][y][z] != undefined;
-}
-
-Objects.prototype.get = function(x, y, z) {
-    return this.exists(x, y, z) ? this.objects[x][y][z] : null;
-}
-
-Objects.prototype.canAddObject = function(entity, x, y, z) {
-    return entity !== undefined 
-        && x != undefined 
-        && y != undefined 
-        && z != undefined;
-}
-
-Objects.prototype.prepareObjectsArray = function(x, y) {
-    if (this.objects[x] === undefined) {
-        this.objects[x] = [];
-        this.objects[x][y] = [];
-        return;
-    }
-
-    if (this.objects[x][y] === undefined) {
-        this.objects[x][y] = [];
-    }
-}
-
-Objects.prototype.add = function(entity, x, y, z) {
-    if (z === undefined) {
-        z = 0;
-    }
-    if (!this.canAddObject(entity, x, y, z)) {
-        return -1;
-    }
-
-    this.prepareObjectsArray(x, y);
-    this.objects[x][y][z] = entity;
-}
-
-module.exports = Objects;
-
-/***/ }),
+/* 8 */,
+/* 9 */,
 /* 10 */,
 /* 11 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -786,9 +599,7 @@ var Graphic = __webpack_require__(1),
     Browser = __webpack_require__(4),
     Stack = __webpack_require__(13),
     Color = __webpack_require__(15),
-    Map = __webpack_require__(5),
-    Assets = __webpack_require__(6),
-    Engine = __webpack_require__(8);
+    Assets = __webpack_require__(6);
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -812,10 +623,6 @@ document.addEventListener("DOMContentLoaded", function() {
             [1, 0, 0, 0, 0, 1],
             [0, 1, 1, 1, 1, 0]
         ],
-        engine = new Engine(
-            graphic,
-            loop
-        ),
         assets = new Assets();
 
         var err = assets.loadImages(
@@ -828,32 +635,6 @@ document.addEventListener("DOMContentLoaded", function() {
         loop.addStartingConditions([
             assets.hasFinishedLoading.bind(assets)
         ]);
-
-        var map = new Map([
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
-        ], assets);
-    
-        map.loadMap();
-    
-        engine.setMap(map);
-        engine.start();
 
         var pixelAnim = function(T, engine) {
             if (dummyLock) {
@@ -907,19 +688,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         loop.setMode("PLAY");
 
-        setTimeout(function(){
-            loop.setMode("PAUSE")
-            setInterval(function(){
-                loop.setMode("PAUSE")
-            }, 6000)
-        }, 3000);
-
-        setTimeout(function(){
-            loop.setMode("PLAY")
-            setInterval(function(){
-                loop.setMode("PLAY")
-            }, 6000)
-        }, 6000);
         (new Browser())
             .onDocumentHidden(loop.pause.bind(loop))
             .onDocumentVisible(loop.start.bind(loop))

@@ -5,9 +5,7 @@ var Graphic = require('../src/canvas/renderer'),
     Browser = require('../src/browser'),
     Stack = require('../src/render/stack'),
     Color = require('../src/render/color'),
-    Map = require('../src/isometric/map'),
-    Assets = require('../src/assets/assets'),
-    Engine = require('../src/isometric/isometric');
+    Assets = require('../src/assets/assets');
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -31,10 +29,6 @@ document.addEventListener("DOMContentLoaded", function() {
             [1, 0, 0, 0, 0, 1],
             [0, 1, 1, 1, 1, 0]
         ],
-        engine = new Engine(
-            graphic,
-            loop
-        ),
         assets = new Assets();
 
         var err = assets.loadImages(
@@ -47,32 +41,6 @@ document.addEventListener("DOMContentLoaded", function() {
         loop.addStartingConditions([
             assets.hasFinishedLoading.bind(assets)
         ]);
-
-        var map = new Map([
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
-        ], assets);
-    
-        map.loadMap();
-    
-        engine.setMap(map);
-        engine.start();
 
         var pixelAnim = function(T, engine) {
             if (dummyLock) {
@@ -126,19 +94,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         loop.setMode("PLAY");
 
-        setTimeout(function(){
-            loop.setMode("PAUSE")
-            setInterval(function(){
-                loop.setMode("PAUSE")
-            }, 6000)
-        }, 3000);
-
-        setTimeout(function(){
-            loop.setMode("PLAY")
-            setInterval(function(){
-                loop.setMode("PLAY")
-            }, 6000)
-        }, 6000);
         (new Browser())
             .onDocumentHidden(loop.pause.bind(loop))
             .onDocumentVisible(loop.start.bind(loop))
