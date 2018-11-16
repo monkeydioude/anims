@@ -38,7 +38,7 @@ Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
  * @param {*} h 
  */
 Renderer.prototype.drawImage = function(image, x, y, w, h) {
-    this.buffer.drawImage(image, x, y, w, h);
+    this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
 }
 
 Renderer.prototype.drawLine = function(fX, fY, tX, tY) {

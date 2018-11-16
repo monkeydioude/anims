@@ -62,18 +62,20 @@ Isometric.prototype.renderMap = function() {
  * @return {int}
  */
 Isometric.prototype.renderObjects = function() {
-    var obj = null;
+    var objs = null;
     for (var x in this.objects.objects) {
         for (var y in this.objects.objects[x]) {
             for (var z in this.objects.objects[x][y]) {
                 x = parseInt(x);
                 y = parseInt(y);
                 z = parseInt(z);
-                obj = this.objects.get(x, y, z);
-                if (!obj) {
+                objs = this.objects.get(x, y, z);
+                if (!objs) {
                     continue;
                 }
-                this.drawImage(obj, x, y);
+                for (i = 0; i < objs.length; i++) {
+                    this.drawImage(objs[i], x, y);
+                }
             }
         }
     }
@@ -106,6 +108,10 @@ Isometric.prototype.drawImage = function(img, x, y) {
     var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
     //coords contain canvas {x:y} coordinates
     this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
+}
+
+Isometric.prototype.getObjectUpdater = function() {
+    return this.objectUpdater;
 }
  
 module.exports = Isometric;

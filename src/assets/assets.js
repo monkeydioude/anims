@@ -1,4 +1,5 @@
-var CouldNotLoad = require('../errors/couldNotLoad');
+var CouldNotLoad = require('../errors/couldNotLoad'),
+    Img = require('./img');
 
 var Assets = function() {
     this.assets = [];
@@ -7,20 +8,27 @@ var Assets = function() {
 
 /**
  * @param string name
- * @param string path
+ * @param object data
  * 
  * loadImage starts the asynchronous loading of a single image
  */
-Assets.prototype.loadImage = function(name, path) {
-    this.assets[name] = new Image();
+Assets.prototype.loadImage = function(name, data) {
+    if (!data.hasOwnProperty("src")) {
+        return ;
+    }
+    if (!data.hasOwnProperty("dx")) {
+        data.dx = 0;
+    }
+    if (!data.hasOwnProperty("dy")) {
+        data.dy = 0;
+    }
+
+    this.assets[name] = new Img(name, data.src, data.dx, data.dy);
     
     this.assetLoadingIt++;
     this.assets[name].onload = function() {
         this.assetLoadingIt--;
     }.bind(this);
-
-    this.assets[name].src = path;
-    this.assets[name].crossOrigin = "Anonymous";
 }
 
 /**

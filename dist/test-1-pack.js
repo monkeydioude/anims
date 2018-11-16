@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 11);
+/******/ 	return __webpack_require__(__webpack_require__.s = 8);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -193,7 +193,7 @@ Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
  * @param {*} h 
  */
 Renderer.prototype.drawImage = function(image, x, y, w, h) {
-    this.buffer.drawImage(image, x, y, w, h);
+    this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
 }
 
 Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
@@ -244,6 +244,7 @@ Renderer.prototype.snapshot = function() {
 }
 
 module.exports = Renderer;
+
 
 /***/ }),
 /* 2 */
@@ -498,11 +499,11 @@ Browser.prototype.onReady = function(cb) {
 module.exports = Browser;
 
 /***/ }),
-/* 5 */,
-/* 6 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var CouldNotLoad = __webpack_require__(7);
+var CouldNotLoad = __webpack_require__(6),
+    Img = __webpack_require__(20);
 
 var Assets = function() {
     this.assets = [];
@@ -511,20 +512,27 @@ var Assets = function() {
 
 /**
  * @param string name
- * @param string path
+ * @param object data
  * 
  * loadImage starts the asynchronous loading of a single image
  */
-Assets.prototype.loadImage = function(name, path) {
-    this.assets[name] = new Image();
+Assets.prototype.loadImage = function(name, data) {
+    if (!data.hasOwnProperty("src")) {
+        return ;
+    }
+    if (!data.hasOwnProperty("dx")) {
+        data.dx = 0;
+    }
+    if (!data.hasOwnProperty("dy")) {
+        data.dy = 0;
+    }
+
+    this.assets[name] = new Img(name, data.src, data.dx, data.dy);
     
     this.assetLoadingIt++;
     this.assets[name].onload = function() {
         this.assetLoadingIt--;
     }.bind(this);
-
-    this.assets[name].src = path;
-    this.assets[name].crossOrigin = "Anonymous";
 }
 
 /**
@@ -571,8 +579,9 @@ Assets.prototype.get = function(name) {
 
 module.exports = Assets;
 
+
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports) {
 
 var CouldNotLoad = function(msg) {
@@ -586,20 +595,18 @@ CouldNotLoad.prototype.error = function() {
 module.exports = CouldNotLoad;
 
 /***/ }),
-/* 8 */,
-/* 9 */,
-/* 10 */,
-/* 11 */
+/* 7 */,
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Graphic = __webpack_require__(1),
     Canvas = __webpack_require__(2),
     Loop = __webpack_require__(3),
-    Logger = __webpack_require__(12),
+    Logger = __webpack_require__(9),
     Browser = __webpack_require__(4),
-    Stack = __webpack_require__(13),
-    Color = __webpack_require__(15),
-    Assets = __webpack_require__(6);
+    Stack = __webpack_require__(10),
+    Color = __webpack_require__(12),
+    Assets = __webpack_require__(5);
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -772,7 +779,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /***/ }),
-/* 12 */
+/* 9 */
 /***/ (function(module, exports) {
 
 var Logger = function(type, shouldDisplayLogs) {
@@ -804,10 +811,10 @@ Logger.prototype.toggleLogs = function() {
 module.exports = Logger;
 
 /***/ }),
-/* 13 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Pixel = __webpack_require__(14);
+var Pixel = __webpack_require__(11);
 
 var Stack = function(x, y, color, m) {
     this.x = x;
@@ -861,7 +868,7 @@ Stack.prototype.computeMatrix = function(m) {
 module.exports = Stack;
 
 /***/ }),
-/* 14 */
+/* 11 */
 /***/ (function(module, exports) {
 
 var Pixel = function(x, y, color) {
@@ -877,7 +884,7 @@ Pixel.prototype.render = function(engine) {
 module.exports = Pixel;
 
 /***/ }),
-/* 15 */
+/* 12 */
 /***/ (function(module, exports) {
 
 var Color = function(r, g, b, a) {
@@ -895,6 +902,62 @@ Color.prototype.RGBA = function() {
 }
 
 module.exports = Color;
+
+/***/ }),
+/* 13 */,
+/* 14 */,
+/* 15 */,
+/* 16 */,
+/* 17 */,
+/* 18 */,
+/* 19 */,
+/* 20 */
+/***/ (function(module, exports) {
+
+var Img = function(name, src, dX, dY) {
+    if (name === undefined) {
+        console.error("An Image requires a name");
+    }
+    if (src === undefined) {
+        console.error("An Image requires a source");
+    }
+    if (dX === undefined) {
+        dX = 0;
+    }
+    if (dY === undefined) {
+        dY = 0;
+    }
+
+    this.name = name;
+    this.src = src;
+    this.dX = dX;
+    this.dY = dY;
+    this.asset = new Image()
+    this.asset.src = src;
+    this.asset.crossOrigin = "Anonymous";
+}
+
+Img.prototype.getDecalX = function() {
+    return this.dX;
+}
+
+Img.prototype.getDecalY = function() {
+    return this.dY;
+}
+
+Img.prototype.getDecal = function() {
+    return {
+        x: this.getDecalX(),
+        y: this.getDecalY()
+    }
+}
+
+Img.prototype.getAsset = function() {
+    return this.asset;
+}
+
+module.exports = Img;
+
 
 /***/ })
 /******/ ]);

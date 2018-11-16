@@ -1,5 +1,6 @@
 var Objects = function() {
     this.objects = [];
+    this.zSafeThreshold = 3;
 }
 
 Objects.prototype.exists = function(x, y, z) {
@@ -37,12 +38,16 @@ Objects.prototype.add = function(entity, x, y, z) {
     if (z === undefined) {
         z = 0;
     }
+    z += this.zSafeThreshold;
     if (!this.canAddObject(entity, x, y, z)) {
         return -1;
     }
 
     this.prepareObjectsArray(x, y);
-    this.objects[x][y][z] = entity;
+    if (this.objects[x][y][z] === undefined) {
+        this.objects[x][y][z] = [];
+    }
+    this.objects[x][y][z].push(entity);
 }
 
 module.exports = Objects;

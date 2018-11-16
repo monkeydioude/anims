@@ -33,9 +33,21 @@ var Renderer = require('../src/canvas/renderer'),
     
     var err = assets.loadImages(
         {
-            "0_0": "../assets/map/tiles/0_0.png",
-            "0_1": "../assets/map/tiles/0_1.png",
-            "building1": "../assets/building/building1.png"
+            "0_0": {
+                src: "../assets/map/tiles/0_0.png",
+                dx: 0,
+                dy: 0
+            },
+            "0_1": {
+                src: "../assets/map/tiles/0_1.png",
+                dx: 0,
+                dy: 0
+            },
+            "building1": {
+                src: "../assets/building/building1.png",
+                dx: 0,
+                dy: -32
+            }
         }
     );
 
@@ -79,9 +91,9 @@ var Renderer = require('../src/canvas/renderer'),
 
     engine.objectUpdater.add("PLAY", function(T, objects) {
         objects.add(assets.get("building1"), 1, 3);
-        objects.add(assets.get("building1"), 3, 6);
+        objects.add(assets.get("building1"), 3, 8);
         objects.add(assets.get("building1"), 6, 2);
-        objects.add(assets.get("building1"), 14, 9);
+        objects.add(assets.get("building1"), 14, 7);
         objects.add(assets.get("building1"), 9, 14);
         objects.add(assets.get("building1"), 10, 10);
     }, "buildings")
@@ -124,7 +136,7 @@ var Renderer = require('../src/canvas/renderer'),
             }
 
             engine.objectUpdater.add("PLAY", function(T, objects) {
-                objects.add(assets.get("building1"), buildings[label].x - 1 << 0, buildings[label].y - 1 << 0)
+                objects.add(assets.get("building1"), buildings[label].x << 0, buildings[label].y << 0, 10)
             }, label)
         }
     }
