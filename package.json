@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "zizo": "git+https://github.com/monkeydioude/zizo.git",
+    "gloop": "git+https://github.com/monkeydioude/gloop.git"
+  },
   "devDependencies": {
     "webpack": "^3.10.0"
   },

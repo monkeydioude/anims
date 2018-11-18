@@ -64,10 +64,379 @@
 /******/ })
 /************************************************************************/
 /******/ ([
-/* 0 */,
-/* 1 */,
-/* 2 */,
-/* 3 */,
+/* 0 */
+/***/ (function(module, exports) {
+
+var Renderer = function(sceneCanvas, bufferCanvas) {
+    this.scene = sceneCanvas;
+    this.buffer = bufferCanvas;
+    this.snap = null;
+}
+
+/**
+ * Draw a rectangle
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} color 
+ */
+Renderer.prototype.draw = function(x, y, w, h, color) {
+   this.buffer.draw(x, y, w, h, color);
+}
+
+/**
+ * Draw ImageData element onto engine's canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
+Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+    this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
+}
+/**
+ * Draw Image element onto engine's canvas
+ * @param {*} Image 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ */
+Renderer.prototype.drawImage = function(image, x, y, w, h) {
+    this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
+}
+
+Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.buffer.drawLine(fX, fY, tX, tY);
+}
+
+/**
+ * Width of the engine's canvas
+ * @return int
+ */
+Renderer.prototype.width = function() {
+    return this.scene.width();
+}
+
+/**
+ * Height of the engine's canvas
+ * @return int
+ */
+Renderer.prototype.height = function() {
+    return this.scene.height();
+}
+
+/**
+ * Return the ImageData version of the whole engine's canvas
+ * @return ImageData
+ */
+Renderer.prototype.captureScene = function() {
+    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
+}
+
+Renderer.prototype.clear = function() {
+    this.scene.clear();
+    this.buffer.clear();
+}
+
+Renderer.prototype.render = function() {
+    // this.scene.clear();
+    this.scene.drawImageData(
+        this.buffer.c.getImageData(
+            0, 0, this.buffer.width(), this.buffer.height()
+        )
+    );
+    this.buffer.clear();
+}
+
+Renderer.prototype.snapshot = function() {
+    return this.buffer.snapshot();
+}
+
+module.exports = Renderer;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+var Canvas = function(canvas) {
+    this.canvas = canvas;
+    this.c = this.canvas.getContext('2d');
+}
+
+/**
+ * 
+ */
+Canvas.prototype.clear = function() {
+    this.c.clearRect(0, 0, this.width(), this.height());
+}
+
+/**
+ * @return int
+ */
+Canvas.prototype.width = function() {
+    return this.canvas.width;
+}
+
+/**
+ * @return int
+ */
+Canvas.prototype.height = function() {
+    return this.canvas.height;
+}
+
+Canvas.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.c.moveTo(fX, fY);
+    this.c.lineTo(tX, tY);
+    this.c.stroke();
+}
+
+/**
+ * @param int x
+ * @param int y
+ * @param int w
+ * @param int h
+ * @param Color color
+ */
+Canvas.prototype.draw = function(x, y, w, h, color) {
+    this.c.fillStyle = color.RGBA();
+    this.c.fillRect(x, y, w, h);
+ }
+
+ Canvas.prototype.drawImage = function(img, x, y, w, h) {
+    if (!x) x = 0;
+    if (!y) y = 0;
+    if (!w) w = this.width();
+    if (!h) h = this.height();
+
+    this.c.drawImage(img, x, y, w, h);
+ }
+/**
+ * Draw ImageData element onto canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
+ Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+    if (!x) x = 0;
+    if (!y) y = 0;
+    if (!dx) dx = 0;
+    if (!dy) dy = 0;
+    if (!w) w = this.width();
+    if (!h) h = this.height();
+
+    this.c.putImageData(imgData, x, y, dx, dy, w, h);
+ }
+
+ Canvas.prototype.snapshot = function() {
+     return this.c.getImageData(0, 0, this.width(), this.height());
+ }
+
+ module.exports = Canvas;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Updater = __webpack_require__(3);
+
+var Loop = function(fps, engine, startingMode)
+{
+    if (!fps) {
+        console.error("fps parameter needed");
+        return ;
+    }
+
+    // Timestamp of previous loop iteration (not requestAnimationFrame call)
+    this.pT = 0;
+    this.cbSeed = null;
+
+    this.setFrequencies(fps);
+    this.engine = engine;
+    this.dataUpdater = new Updater("data");
+    this.displayUpdater = new Updater("graphic");
+    this.mode = startingMode;
+
+    this.startingConditions = [];
+};
+
+/**
+ * @param {*} mode 
+ */
+Loop.prototype.setMode = function(mode) {
+    console.info("Setting mode from", this.mode, "to", mode);
+    this.mode = mode;
+}
+
+Loop.prototype.pause = function() {
+    console.info("paused");
+    clearTimeout(this.cbSeed);
+    clearTimeout(this.dSeed);
+}
+
+Loop.prototype.start = function() {
+    if (!this.canStart()) {
+        this.engine.scene.c.fillText("Loading...", 360, 295);            
+        setTimeout(this.start.bind(this), this.miF);
+        return;
+    }
+
+    console.info("started");
+    setTimeout(function(){this.dataLoop(0);}.bind(this), 30);
+    setTimeout(function(){this.displayLoop(0);}.bind(this), 45);
+}
+
+Loop.prototype.addStartingConditions = function(conditions) {
+    this.startingConditions = conditions;
+}
+
+Loop.prototype.canStart = function() {
+    for (i = 0; i < this.startingConditions.length; i++) {
+        if (this.startingConditions[i]() === false) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ *  set fps, iF & miF
+ * (iF = 1 / FPS, time between too frames)
+ * (miF = iF * 1000, time between frames in milliseconds)
+ * @param {*} fps 
+ */
+Loop.prototype.setFrequencies = function(fps) {
+    this.fps = fps;
+    this.iF = 1 / fps;
+    this.miF = 1000 * this.iF;
+    console.info("setFrequencies("+fps+") = {", "\n\tfps:", fps, "\n\tiF:", this.iF, "\n\tmiF:", this.miF, "\n}");
+}
+
+/**
+ * 
+ * @param {*} T 
+ */
+Loop.prototype.dataLoop = function(T) {
+    var nT = window.performance.now();
+
+    this.dataUpdater.update(this.mode, T);
+    this.cbSeed = setTimeout(function(){this.dataLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
+}
+
+/**
+ * 
+ * @param {*} T 
+ */
+Loop.prototype.displayLoop = function(T) {
+    var nT = window.performance.now(),
+        updStatus = 0;
+
+    updStatus = this.displayUpdater.update(this.mode, T, this.engine);
+    
+    if (updStatus > 0) {
+        this.engine.render();
+    }
+    this.dSeed = setTimeout(function(){this.displayLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
+}
+
+module.exports = Loop;
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+var Updater = function(name) {
+    if (!name) {
+        name = Date.now();
+    }
+    this.name = name;
+    this.nodes = {};
+    this.defaultNameCounter = 0;
+}
+
+/**
+ * 
+ * @param {int} T 
+ */
+Updater.prototype.update = function(mode, T, engine) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return ;
+    }
+    var n = this.nodes[mode],
+        updIt = 0,
+        updSt = 0;
+
+    for (var i in n) {
+        updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = 1;
+        }
+        if (updSt == -1) {
+            delete n[i];
+            continue;
+        }
+        updIt += updSt;
+    }
+    
+    return updIt;
+}
+
+/**
+ * 
+ * @param {function} cb
+ * @param {string} name 
+ * 
+ * @return {null|string}
+ */
+Updater.prototype.add = function(mode, cb, name) {
+    if (!mode) {
+        return "Mode must be provided";
+    }
+    
+    if (!name) {
+        name = this.defaultNameCounter;
+        this.defaultNameCounter++;
+    }
+
+    if (!this.nodes.hasOwnProperty(mode)) {
+        this.nodes[mode] = {};
+    }
+
+    if (this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not add element to the updater list, name already exists";
+    }
+
+    this.nodes[mode][name] = cb;
+
+    return null;
+}
+
+Updater.prototype.remove = function(mode, name) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return "Could not remove element, mode " + mode + " does not exist";
+    }
+
+    if (!this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not remove element, name " + name + " does not exist";
+    }
+
+    delete this.nodes[mode][name];
+
+    return null;
+}
+
+module.exports = Updater;
+
+/***/ }),
 /* 4 */
 /***/ (function(module, exports) {
 
@@ -130,9 +499,151 @@ Browser.prototype.onReady = function(cb) {
 module.exports = Browser;
 
 /***/ }),
-/* 5 */,
-/* 6 */,
-/* 7 */,
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var CouldNotLoad = __webpack_require__(6),
+    Img = __webpack_require__(7);
+
+var Assets = function() {
+    this.assets = [];
+    this.stillLoadingIt = 0;
+}
+
+/**
+ * @param string name
+ * @param object data
+ * 
+ * loadImage starts the asynchronous loading of a single image
+ */
+Assets.prototype.loadImage = function(name, data) {
+    if (!data.hasOwnProperty("src")) {
+        return ;
+    }
+    if (!data.hasOwnProperty("dx")) {
+        data.dx = 0;
+    }
+    if (!data.hasOwnProperty("dy")) {
+        data.dy = 0;
+    }
+
+    this.assets[name] = new Img(name, data.src, data.dx, data.dy);
+    
+    this.assetLoadingIt++;
+    this.assets[name].onload = function() {
+        this.assetLoadingIt--;
+    }.bind(this);
+}
+
+/**
+ * @param Object imgObject
+ * @return CouldNotLoad|null
+ * 
+ * loadImages loads an Object of images using the form:
+ * {"asset_name": "path_to_asset"}
+ */
+Assets.prototype.loadImages = function(imgObject) {
+    if (imgObject.constructor !== {}.constructor){
+        return new CouldNotLoad("Assets.loadImages: imgObject is not an Object");
+    }
+
+    for (var k in imgObject) {
+        if (!imgObject.hasOwnProperty(k)) {
+            continue;
+        }
+        this.loadImage(k, imgObject[k]);
+    }
+    
+    return null;
+}
+
+/**
+ * @return bool
+ * 
+ * hasFinishLoading returns the state of the assets loading
+ */
+Assets.prototype.hasFinishedLoading = function() {
+    return this.stillLoadingIt === 0;
+}
+
+/**
+ * @return Asset
+ */
+Assets.prototype.get = function(name) {
+    if (this.assets[name] == undefined) {
+        return null;
+    }
+
+    return this.assets[name];
+}
+
+module.exports = Assets;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+var CouldNotLoad = function(msg) {
+    this.msg = msg;
+}
+
+CouldNotLoad.prototype.error = function() {
+    return "Could not Load: " + this.msg;
+}
+
+module.exports = CouldNotLoad;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+var Img = function(name, src, dX, dY) {
+    if (name === undefined) {
+        console.error("An Image requires a name");
+    }
+    if (src === undefined) {
+        console.error("An Image requires a source");
+    }
+    if (dX === undefined) {
+        dX = 0;
+    }
+    if (dY === undefined) {
+        dY = 0;
+    }
+
+    this.name = name;
+    this.src = src;
+    this.dX = dX;
+    this.dY = dY;
+    this.asset = new Image()
+    this.asset.src = src;
+    this.asset.crossOrigin = "Anonymous";
+}
+
+Img.prototype.getDecalX = function() {
+    return this.dX;
+}
+
+Img.prototype.getDecalY = function() {
+    return this.dY;
+}
+
+Img.prototype.getDecal = function() {
+    return {
+        x: this.getDecalX(),
+        y: this.getDecalY()
+    }
+}
+
+Img.prototype.getAsset = function() {
+    return this.asset;
+}
+
+module.exports = Img;
+
+
+/***/ }),
 /* 8 */,
 /* 9 */,
 /* 10 */,
@@ -141,16 +652,16 @@ module.exports = Browser;
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Renderer = __webpack_require__(22),
-    Canvas = __webpack_require__(23),
-    Loop = __webpack_require__(24),
-    Map = __webpack_require__(28),
+var Renderer = __webpack_require__(0),
+    Canvas = __webpack_require__(1),
+    Loop = __webpack_require__(2),
+    Map = __webpack_require__(14),
     Browser = __webpack_require__(4),
-    Assets = __webpack_require__(25),
-    Camera = __webpack_require__(29),
+    Assets = __webpack_require__(5),
+    Camera = __webpack_require__(15),
     config = __webpack_require__(16),
-    Coord = __webpack_require__(30),
-    Engine = __webpack_require__(31);
+    Coord = __webpack_require__(17),
+    Engine = __webpack_require__(18);
 
 (new Browser()).onReady(function() {
     var camera = new Camera(
@@ -158,36 +669,40 @@ var Renderer = __webpack_require__(22),
             2.5,
             6.5,
             config.canvasMX,
-            config.canvasMY
+            config.canvasMY,
+            config.tileTopW,
+            config.isoDecalX,
+            config.isoDecalY
         )),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
         ),
-        loop = new Loop(30, renderer),
+        loop = new Loop(15, renderer),
         engine = new Engine(
             renderer,
             loop.displayUpdater,
             loop.dataUpdater,
             camera,
-            config
+            config.tileW,
+            config.tileH
         ),
         assets = new Assets();
     
     var err = assets.loadImages(
         {
             "0_0": {
-                src: "../assets/map/tiles/0_0.png",
+                src: "/assets/map/tiles/0_0.png",
                 dx: 0,
                 dy: 0
             },
             "0_1": {
-                src: "../assets/map/tiles/0_1.png",
+                src: "/assets/map/tiles/0_1.png",
                 dx: 0,
                 dy: 0
             },
             "building1": {
-                src: "../assets/building/building1.png",
+                src: "/assets/building/building1.png",
                 dx: 0,
                 dy: -32
             }
@@ -292,552 +807,7 @@ var Renderer = __webpack_require__(22),
 
 
 /***/ }),
-/* 14 */,
-/* 15 */,
-/* 16 */
-/***/ (function(module, exports) {
-
-var config = {
-    canvasW: 800,
-    canvasH: 600,
-    tileW: 64,
-    tileH: 64,
-    tileTopW: 64,
-    tileTopH: 32,
-}
-
-config['isoDecalX'] = config.tileTopW / 2;
-config['isoDecalY'] = config.tileTopH / 2;
-config['canvasMX'] = (config.canvasW / 2);
-config['canvasMY'] = config.canvasH / 2;
-
-
-module.exports = config;
-
-/***/ }),
-/* 17 */,
-/* 18 */,
-/* 19 */,
-/* 20 */,
-/* 21 */
-/***/ (function(module, exports) {
-
-var Updater = function(name) {
-    if (!name) {
-        name = Date.now();
-    }
-    this.name = name;
-    this.nodes = {};
-    this.defaultNameCounter = 0;
-}
-
-/**
- * 
- * @param {int} T 
- */
-Updater.prototype.update = function(mode, T, engine) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return ;
-    }
-    var n = this.nodes[mode],
-        updIt = 0,
-        updSt = 0;
-
-    for (var i in n) {
-        updSt = n[i](T, engine);
-        if (updSt === undefined) {
-            updSt = 1;
-        }
-        if (updSt == -1) {
-            delete n[i];
-            continue;
-        }
-        updIt += updSt;
-    }
-    
-    return updIt;
-}
-
-/**
- * 
- * @param {function} cb
- * @param {string} name 
- * 
- * @return {null|string}
- */
-Updater.prototype.add = function(mode, cb, name) {
-    if (!mode) {
-        return "Mode must be provided";
-    }
-    
-    if (!name) {
-        name = this.defaultNameCounter;
-        this.defaultNameCounter++;
-    }
-
-    if (!this.nodes.hasOwnProperty(mode)) {
-        this.nodes[mode] = {};
-    }
-
-    if (this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not add element to the updater list, name already exists";
-    }
-
-    this.nodes[mode][name] = cb;
-
-    return null;
-}
-
-Updater.prototype.remove = function(mode, name) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return "Could not remove element, mode " + mode + " does not exist";
-    }
-
-    if (!this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not remove element, name " + name + " does not exist";
-    }
-
-    delete this.nodes[mode][name];
-
-    return null;
-}
-
-module.exports = Updater;
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports) {
-
-var Renderer = function(sceneCanvas, bufferCanvas) {
-    this.scene = sceneCanvas;
-    this.buffer = bufferCanvas;
-    this.snap = null;
-}
-
-/**
- * Draw a rectangle
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} color 
- */
-Renderer.prototype.draw = function(x, y, w, h, color) {
-   this.buffer.draw(x, y, w, h, color);
-}
-
-/**
- * Draw ImageData element onto engine's canvas
- * @param {*} imgData 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} dx 
- * @param {*} dy 
- */
-Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
-    this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
-}
-/**
- * Draw Image element onto engine's canvas
- * @param {*} Image 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- */
-Renderer.prototype.drawImage = function(image, x, y, w, h) {
-    this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
-}
-
-Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
-    this.buffer.drawLine(fX, fY, tX, tY);
-}
-
-/**
- * Width of the engine's canvas
- * @return int
- */
-Renderer.prototype.width = function() {
-    return this.scene.width();
-}
-
-/**
- * Height of the engine's canvas
- * @return int
- */
-Renderer.prototype.height = function() {
-    return this.scene.height();
-}
-
-/**
- * Return the ImageData version of the whole engine's canvas
- * @return ImageData
- */
-Renderer.prototype.captureScene = function() {
-    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
-}
-
-Renderer.prototype.clear = function() {
-    this.scene.clear();
-    this.buffer.clear();
-}
-
-Renderer.prototype.render = function() {
-    // this.scene.clear();
-    this.scene.drawImageData(
-        this.buffer.c.getImageData(
-            0, 0, this.buffer.width(), this.buffer.height()
-        )
-    );
-    this.buffer.clear();
-}
-
-Renderer.prototype.snapshot = function() {
-    return this.buffer.snapshot();
-}
-
-module.exports = Renderer;
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports) {
-
-var Canvas = function(canvas) {
-    this.canvas = canvas;
-    this.c = this.canvas.getContext('2d');
-}
-
-/**
- * 
- */
-Canvas.prototype.clear = function() {
-    this.c.clearRect(0, 0, this.width(), this.height());
-}
-
-/**
- * @return int
- */
-Canvas.prototype.width = function() {
-    return this.canvas.width;
-}
-
-/**
- * @return int
- */
-Canvas.prototype.height = function() {
-    return this.canvas.height;
-}
-
-Canvas.prototype.drawLine = function(fX, fY, tX, tY) {
-    this.c.moveTo(fX, fY);
-    this.c.lineTo(tX, tY);
-    this.c.stroke();
-}
-
-/**
- * @param int x
- * @param int y
- * @param int w
- * @param int h
- * @param Color color
- */
-Canvas.prototype.draw = function(x, y, w, h, color) {
-    this.c.fillStyle = color.RGBA();
-    this.c.fillRect(x, y, w, h);
- }
-
- Canvas.prototype.drawImage = function(img, x, y, w, h) {
-    if (!x) x = 0;
-    if (!y) y = 0;
-    if (!w) w = this.width();
-    if (!h) h = this.height();
-
-    this.c.drawImage(img, x, y, w, h);
- }
-/**
- * Draw ImageData element onto canvas
- * @param {*} imgData 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} dx 
- * @param {*} dy 
- */
- Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
-    if (!x) x = 0;
-    if (!y) y = 0;
-    if (!dx) dx = 0;
-    if (!dy) dy = 0;
-    if (!w) w = this.width();
-    if (!h) h = this.height();
-
-    this.c.putImageData(imgData, x, y, dx, dy, w, h);
- }
-
- Canvas.prototype.snapshot = function() {
-     return this.c.getImageData(0, 0, this.width(), this.height());
- }
-
- module.exports = Canvas;
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Updater = __webpack_require__(21);
-
-var Loop = function(fps, engine, startingMode)
-{
-    if (!fps) {
-        console.error("fps parameter needed");
-        return ;
-    }
-
-    // Timestamp of previous loop iteration (not requestAnimationFrame call)
-    this.pT = 0;
-    this.cbSeed = null;
-
-    this.setFrequencies(fps);
-    this.engine = engine;
-    this.dataUpdater = new Updater("data");
-    this.displayUpdater = new Updater("graphic");
-    this.mode = startingMode;
-
-    this.startingConditions = [];
-};
-
-/**
- * @param {*} mode 
- */
-Loop.prototype.setMode = function(mode) {
-    console.info("Setting mode from", this.mode, "to", mode);
-    this.mode = mode;
-}
-
-Loop.prototype.pause = function() {
-    console.info("paused");
-    clearTimeout(this.cbSeed);
-    clearTimeout(this.dSeed);
-}
-
-Loop.prototype.start = function() {
-    if (!this.canStart()) {
-        this.engine.scene.c.fillText("Loading...", 360, 295);            
-        setTimeout(this.start.bind(this), this.miF);
-        return;
-    }
-
-    console.info("started");
-    setTimeout(function(){this.dataLoop(0);}.bind(this), 30);
-    setTimeout(function(){this.displayLoop(0);}.bind(this), 45);
-}
-
-Loop.prototype.addStartingConditions = function(conditions) {
-    this.startingConditions = conditions;
-}
-
-Loop.prototype.canStart = function() {
-    for (i = 0; i < this.startingConditions.length; i++) {
-        if (this.startingConditions[i]() === false) {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
- *  set fps, iF & miF
- * (iF = 1 / FPS, time between too frames)
- * (miF = iF * 1000, time between frames in milliseconds)
- * @param {*} fps 
- */
-Loop.prototype.setFrequencies = function(fps) {
-    this.fps = fps;
-    this.iF = 1 / fps;
-    this.miF = 1000 * this.iF;
-    console.info("setFrequencies("+fps+") = {", "\n\tfps:", fps, "\n\tiF:", this.iF, "\n\tmiF:", this.miF, "\n}");
-}
-
-/**
- * 
- * @param {*} T 
- */
-Loop.prototype.dataLoop = function(T) {
-    var nT = window.performance.now();
-
-    this.dataUpdater.update(this.mode, T);
-    this.cbSeed = setTimeout(function(){this.dataLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
-}
-
-/**
- * 
- * @param {*} T 
- */
-Loop.prototype.displayLoop = function(T) {
-    var nT = window.performance.now(),
-        updStatus = 0;
-
-    updStatus = this.displayUpdater.update(this.mode, T, this.engine);
-    
-    if (updStatus > 0) {
-        this.engine.render();
-    }
-    this.dSeed = setTimeout(function(){this.displayLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
-}
-
-module.exports = Loop;
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var CouldNotLoad = __webpack_require__(26),
-    Img = __webpack_require__(27);
-
-var Assets = function() {
-    this.assets = [];
-    this.stillLoadingIt = 0;
-}
-
-/**
- * @param string name
- * @param object data
- * 
- * loadImage starts the asynchronous loading of a single image
- */
-Assets.prototype.loadImage = function(name, data) {
-    if (!data.hasOwnProperty("src")) {
-        return ;
-    }
-    if (!data.hasOwnProperty("dx")) {
-        data.dx = 0;
-    }
-    if (!data.hasOwnProperty("dy")) {
-        data.dy = 0;
-    }
-
-    this.assets[name] = new Img(name, data.src, data.dx, data.dy);
-    
-    this.assetLoadingIt++;
-    this.assets[name].onload = function() {
-        this.assetLoadingIt--;
-    }.bind(this);
-}
-
-/**
- * @param Object imgObject
- * @return CouldNotLoad|null
- * 
- * loadImages loads an Object of images using the form:
- * {"asset_name": "path_to_asset"}
- */
-Assets.prototype.loadImages = function(imgObject) {
-    if (imgObject.constructor !== {}.constructor){
-        return new CouldNotLoad("Assets.loadImages: imgObject is not an Object");
-    }
-
-    for (var k in imgObject) {
-        if (!imgObject.hasOwnProperty(k)) {
-            continue;
-        }
-        this.loadImage(k, imgObject[k]);
-    }
-    
-    return null;
-}
-
-/**
- * @return bool
- * 
- * hasFinishLoading returns the state of the assets loading
- */
-Assets.prototype.hasFinishedLoading = function() {
-    return this.stillLoadingIt === 0;
-}
-
-/**
- * @return Asset
- */
-Assets.prototype.get = function(name) {
-    if (this.assets[name] == undefined) {
-        return null;
-    }
-
-    return this.assets[name];
-}
-
-module.exports = Assets;
-
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports) {
-
-var CouldNotLoad = function(msg) {
-    this.msg = msg;
-}
-
-CouldNotLoad.prototype.error = function() {
-    return "Could not Load: " + this.msg;
-}
-
-module.exports = CouldNotLoad;
-
-/***/ }),
-/* 27 */
-/***/ (function(module, exports) {
-
-var Img = function(name, src, dX, dY) {
-    if (name === undefined) {
-        console.error("An Image requires a name");
-    }
-    if (src === undefined) {
-        console.error("An Image requires a source");
-    }
-    if (dX === undefined) {
-        dX = 0;
-    }
-    if (dY === undefined) {
-        dY = 0;
-    }
-
-    this.name = name;
-    this.src = src;
-    this.dX = dX;
-    this.dY = dY;
-    this.asset = new Image()
-    this.asset.src = src;
-    this.asset.crossOrigin = "Anonymous";
-}
-
-Img.prototype.getDecalX = function() {
-    return this.dX;
-}
-
-Img.prototype.getDecalY = function() {
-    return this.dY;
-}
-
-Img.prototype.getDecal = function() {
-    return {
-        x: this.getDecalX(),
-        y: this.getDecalY()
-    }
-}
-
-Img.prototype.getAsset = function() {
-    return this.asset;
-}
-
-module.exports = Img;
-
-
-/***/ }),
-/* 28 */
+/* 14 */
 /***/ (function(module, exports) {
 
 var Map = function(matrix, assets) {
@@ -858,7 +828,7 @@ Map.prototype.loadMap = function() {
 module.exports = Map;
 
 /***/ }),
-/* 29 */
+/* 15 */
 /***/ (function(module, exports) {
 
 var Camera = function(coord) {
@@ -899,10 +869,29 @@ Camera.prototype.getCoordinates = function () {
 module.exports = Camera;
 
 /***/ }),
-/* 30 */
-/***/ (function(module, exports, __webpack_require__) {
+/* 16 */
+/***/ (function(module, exports) {
 
-var config = __webpack_require__(16);
+var config = {
+    canvasW: 800,
+    canvasH: 600,
+    tileW: 64,
+    tileH: 64,
+    tileTopW: 64,
+    tileTopH: 32,
+}
+
+config['isoDecalX'] = config.tileTopW / 2;
+config['isoDecalY'] = config.tileTopH / 2;
+config['canvasMX'] = (config.canvasW / 2);
+config['canvasMY'] = config.canvasH / 2;
+
+
+module.exports = config;
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
 
 /**
  * Coordinates is used to convert isometric's {x:y} coordinates
@@ -918,7 +907,7 @@ var config = __webpack_require__(16);
  * @param {int} ccX canvas X coordinates where the Camera looks at will be drawn
  * @param {int} ccY canvas Y coordinates where the Camera looks at will be drawn
  */
-var Coordinates = function(icX, icY, ccX, ccY) {
+var Coordinates = function(icX, icY, ccX, ccY, tileW, decalX, decalY) {
     this.start = {
         x: 0,
         y: 0
@@ -931,10 +920,22 @@ var Coordinates = function(icX, icY, ccX, ccY) {
         ccX = 0;
         ccY = 0;
     }
+    if (tileW === undefined) {
+        tileW = 64;
+    }
+    if (decalX === undefined) {
+        decalX = 0
+    }
+    if ( decalY === undefined) {
+        decalY = 0
+    }
     this.icX = icX;
     this.icY = icY;
     this.ccX = ccX;
     this.ccY = ccY;
+    this.tileW = tileW;
+    this.decalX = decalX;
+    this.decalY = decalY;
 }
 
 /**
@@ -945,8 +946,8 @@ var Coordinates = function(icX, icY, ccX, ccY) {
  */
 Coordinates.prototype.computeCenter = function() {
     this.start = {
-        x: this.ccX - config.isoDecalX + ((this.icY - this.icX) * config.isoDecalX),
-        y: this.ccY - ((this.icX + this.icY) * config.isoDecalY)
+        x: this.ccX - this.decalX + ((this.icY - this.icX) * this.decalX),
+        y: this.ccY - ((this.icX + this.icY) * this.decalY)
     }
     return this;
 }
@@ -963,20 +964,23 @@ Coordinates.prototype.getStart = function () {
  * @param {int} y
  */
 Coordinates.prototype.fromTileCoordinates = function(x, y) {
+
+    console.log(this.start.x, this.tileW)
     return {
-        x: this.start.x + (x * config.tileTopW) - ((x + y) * config.isoDecalX),
-        y: this.start.y + ((x + y) * config.isoDecalY)
+        x: this.start.x + (x * this.tileW) - ((x + y) * this.decalX),
+        y: this.start.y + ((x + y) * this.decalY)
     }
 }
 
 module.exports = Coordinates;
 
+
 /***/ }),
-/* 31 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Updater = __webpack_require__(21),
-    Objects = __webpack_require__(32);
+var Updater = __webpack_require__(19),
+    Objects = __webpack_require__(20);
 
 /**
  * Isometric is the main engine managing the isometric rendering of elements.
@@ -988,13 +992,14 @@ var Updater = __webpack_require__(21),
  * @param {Camera} camera 
  * @param {config} config 
  */
-var Isometric = function(renderer, displayUpdater, dataUpdater, camera, config) {
+var Isometric = function(renderer, displayUpdater, dataUpdater, camera, tileW, tileH) {
     this.renderer = renderer;
     this.displayUpdater = displayUpdater;
     this.dataUpdater = dataUpdater;
     this.map = [];
     this.camera = camera;
-    this.config = config;
+    this.tileW = tileW;
+    this.tileH = tileH;
     this.objectUpdater = new Updater("iso");
     this.objects = new Objects();
 }
@@ -1084,7 +1089,7 @@ Isometric.prototype.drawImage = function(img, x, y) {
     }
     var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
     //coords contain canvas {x:y} coordinates
-    this.renderer.drawImage(img, coords.x, coords.y, this.config.tileW, this.config.tileH);
+    this.renderer.drawImage(img, coords.x, coords.y, this.tileW, this.tileH);
 }
 
 Isometric.prototype.getObjectUpdater = function() {
@@ -1095,7 +1100,93 @@ module.exports = Isometric;
 
 
 /***/ }),
-/* 32 */
+/* 19 */
+/***/ (function(module, exports) {
+
+var Updater = function(name) {
+    if (!name) {
+        name = Date.now();
+    }
+    this.name = name;
+    this.nodes = {};
+    this.defaultNameCounter = 0;
+}
+
+/**
+ * 
+ * @param {int} T 
+ */
+Updater.prototype.update = function(mode, T, engine) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return ;
+    }
+    var n = this.nodes[mode],
+        updIt = 0,
+        updSt = 0;
+
+    for (var i in n) {
+        updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = 1;
+        }
+        if (updSt == -1) {
+            delete n[i];
+            continue;
+        }
+        updIt += updSt;
+    }
+    
+    return updIt;
+}
+
+/**
+ * 
+ * @param {function} cb
+ * @param {string} name 
+ * 
+ * @return {null|string}
+ */
+Updater.prototype.add = function(mode, cb, name) {
+    if (!mode) {
+        return "Mode must be provided";
+    }
+    
+    if (!name) {
+        name = this.defaultNameCounter;
+        this.defaultNameCounter++;
+    }
+
+    if (!this.nodes.hasOwnProperty(mode)) {
+        this.nodes[mode] = {};
+    }
+
+    if (this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not add element to the updater list, name already exists";
+    }
+
+    this.nodes[mode][name] = cb;
+
+    return null;
+}
+
+Updater.prototype.remove = function(mode, name) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return "Could not remove element, mode " + mode + " does not exist";
+    }
+
+    if (!this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not remove element, name " + name + " does not exist";
+    }
+
+    delete this.nodes[mode][name];
+
+    return null;
+}
+
+module.exports = Updater;
+
+/***/ }),
+/* 20 */
 /***/ (function(module, exports) {
 
 var Objects = function() {

@@ -1,13 +1,13 @@
-var Renderer = require('../src/canvas/renderer'),
-    Canvas = require('../src/canvas/canvas'),
-    Loop = require('../src/loop'),
-    Map = require('../src/isometric/map'),
+var Renderer = require('gloop/renderer'),
+    Canvas = require('gloop/canvas'),
+    Loop = require('gloop/loop'),
+    Map = require('zizo/map'),
     Browser = require('../src/browser'),
-    Assets = require('../src/assets/assets'),
-    Camera = require('../src/camera'),
+    Assets = require('gloop/assets/assets'),
+    Camera = require('zizo/camera'),
     config = require('../src/config'),
-    Coord = require('../src/isometric/coordinates'),
-    Engine = require('../src/isometric/isometric');
+    Coord = require('zizo/coordinates'),
+    Engine = require('zizo/isometric');
 
 (new Browser()).onReady(function() {
     var camera = new Camera(
@@ -15,36 +15,40 @@ var Renderer = require('../src/canvas/renderer'),
             2.5,
             6.5,
             config.canvasMX,
-            config.canvasMY
+            config.canvasMY,
+            config.tileTopW,
+            config.isoDecalX,
+            config.isoDecalY
         )),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
         ),
-        loop = new Loop(30, renderer),
+        loop = new Loop(15, renderer),
         engine = new Engine(
             renderer,
             loop.displayUpdater,
             loop.dataUpdater,
             camera,
-            config
+            config.tileW,
+            config.tileH
         ),
         assets = new Assets();
     
     var err = assets.loadImages(
         {
             "0_0": {
-                src: "../assets/map/tiles/0_0.png",
+                src: "/assets/map/tiles/0_0.png",
                 dx: 0,
                 dy: 0
             },
             "0_1": {
-                src: "../assets/map/tiles/0_1.png",
+                src: "/assets/map/tiles/0_1.png",
                 dx: 0,
                 dy: 0
             },
             "building1": {
-                src: "../assets/building/building1.png",
+                src: "/assets/building/building1.png",
                 dx: 0,
                 dy: -32
             }

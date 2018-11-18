@@ -1,11 +1,11 @@
-var Graphic = require('../src/canvas/renderer'),
-    Canvas = require('../src/canvas/canvas'),
-    Loop = require('../src/loop'),
+var Renderer = require('gloop/renderer'),
+    Canvas = require('gloop/canvas'),
+    Loop = require('gloop/loop'),
     Logger = require('../src/logger'),
     Browser = require('../src/browser'),
     Stack = require('../src/render/stack'),
     Color = require('../src/render/color'),
-    Assets = require('../src/assets/assets');
+    Assets = require('gloop/assets/assets');
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
