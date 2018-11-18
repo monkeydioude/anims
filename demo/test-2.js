@@ -36,21 +36,21 @@ var Renderer = require('gloop/renderer'),
     var err = assets.loadImages(
         {
             "0_0": {
-                src: "/assets/map/tiles/0_0.png",
+                src: "../assets/map/tiles/0_0.png",
                 dx: 0,
                 dy: 0,
                 w: 64,
                 h: 64
             },
             "0_1": {
-                src: "/assets/map/tiles/0_1.png",
+                src: "../assets/map/tiles/0_1.png",
                 dx: 0,
                 dy: 0,
                 w: 64,
                 h: 64
             },
             "building1": {
-                src: "/assets/building/building1.png",
+                src: "../assets/building/building1.png",
                 dx: 0,
                 dy: -32,
                 w: 64,
