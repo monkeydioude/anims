@@ -29,9 +29,7 @@ var Renderer = require('gloop/renderer'),
             renderer,
             loop.displayUpdater,
             loop.dataUpdater,
-            camera,
-            config.tileW,
-            config.tileH
+            camera
         ),
         assets = new Assets();
     
@@ -41,8 +39,6 @@ var Renderer = require('gloop/renderer'),
                 src: "/assets/map/tiles/0_0.png",
                 dx: 0,
                 dy: 0,
-                ix: 1,
-                iy: 1,
                 w: 64,
                 h: 64
             },
@@ -50,8 +46,6 @@ var Renderer = require('gloop/renderer'),
                 src: "/assets/map/tiles/0_1.png",
                 dx: 0,
                 dy: 0,
-                ix: 1,
-                iy: 1,
                 w: 64,
                 h: 64
             },
@@ -59,8 +53,6 @@ var Renderer = require('gloop/renderer'),
                 src: "/assets/building/building1.png",
                 dx: 0,
                 dy: -32,
-                ix: 1,
-                iy: 1,
                 w: 64,
                 h: 64
             }

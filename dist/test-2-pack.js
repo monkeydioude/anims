@@ -75,11 +75,11 @@ var Renderer = function(sceneCanvas, bufferCanvas) {
 
 /**
  * Draw a rectangle
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} color 
+ * @param {int|float} x 
+ * @param {int|float*} y 
+ * @param {int} w 
+ * @param {int} h 
+ * @param {string} color 
  */
 Renderer.prototype.draw = function(x, y, w, h, color) {
    this.buffer.draw(x, y, w, h, color);
@@ -87,31 +87,27 @@ Renderer.prototype.draw = function(x, y, w, h, color) {
 
 /**
  * Draw ImageData element onto engine's canvas
- * @param {*} imgData 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} dx 
- * @param {*} dy 
+ * @param {ImageData} imgData 
+ * @param {int|float} x 
+ * @param {int|float} y 
+ * @param {int} w 
+ * @param {int} h 
+ * @param {int|float} dx 
+ * @param {int|float} dy 
  */
 Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
     this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
 }
 /**
  * Draw Image element onto engine's canvas
- * @param {*} Image 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
+ * @param {Image} Image 
+ * @param {int|float} x 
+ * @param {int|float} y 
+ * @param {int} w 
+ * @param {int} h 
  */
 Renderer.prototype.drawImage = function(image, x, y, w, h) {
-    this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
-}
-
-Renderer.prototype.drawAsset = function(image, x, y) {
-    image.render(this.buffer, x, y);
+    this.buffer.drawImage(image, x, y, w, h);
 }
 
 Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
@@ -532,7 +528,7 @@ Assets.prototype.loadImage = function(name, data) {
         data.dy = 0;
     }
 
-    this.assets[name] = new Img(name, data.src, data.dx, data.dy, data.ix, data.iy, data.w, data.h);
+    this.assets[name] = new Img(name, data.src, data.dx, data.dy, data.w, data.h);
     
     this.assetLoadingIt++;
     this.assets[name].onload = function() {
@@ -603,7 +599,7 @@ module.exports = CouldNotLoad;
 /* 7 */
 /***/ (function(module, exports) {
 
-var Img = function(name, src, dX, dY, ix, iy, w, h) {
+var Img = function(name, src, dX, dY, w, h) {
     if (name === undefined) {
         console.error("An Image requires a name");
     }
@@ -616,12 +612,6 @@ var Img = function(name, src, dX, dY, ix, iy, w, h) {
     if (dY === undefined) {
         dY = 0;
     }
-    if (ix === undefined) {
-        ix = 1;
-    }
-    if (iy === undefined) {
-        iy = 1;
-    }
     if (w === undefined) {
         w = 64;
     }
@@ -632,8 +622,6 @@ var Img = function(name, src, dX, dY, ix, iy, w, h) {
     this.src = src;
     this.dX = dX;
     this.dY = dY;
-    this.ix = ix;
-    this.iy = iy;
     this.w = w;
     this.h = h;
     this.asset = new Image()
@@ -661,7 +649,7 @@ Img.prototype.getAsset = function() {
 }
 
 Img.prototype.render = function (renderer, x, y) {
-    renderer.drawImage(this.getAsset(), x, y, this.w, this.h)
+    renderer.drawImage(this.getAsset(), x + this.getDecalX(), y + this.getDecalY(), this.w, this.h);
 }
 
 module.exports = Img;
@@ -707,9 +695,7 @@ var Renderer = __webpack_require__(0),
             renderer,
             loop.displayUpdater,
             loop.dataUpdater,
-            camera,
-            config.tileW,
-            config.tileH
+            camera
         ),
         assets = new Assets();
     
@@ -719,8 +705,6 @@ var Renderer = __webpack_require__(0),
                 src: "/assets/map/tiles/0_0.png",
                 dx: 0,
                 dy: 0,
-                ix: 1,
-                iy: 1,
                 w: 64,
                 h: 64
             },
@@ -728,8 +712,6 @@ var Renderer = __webpack_require__(0),
                 src: "/assets/map/tiles/0_1.png",
                 dx: 0,
                 dy: 0,
-                ix: 1,
-                iy: 1,
                 w: 64,
                 h: 64
             },
@@ -737,8 +719,6 @@ var Renderer = __webpack_require__(0),
                 src: "/assets/building/building1.png",
                 dx: 0,
                 dy: -32,
-                ix: 1,
-                iy: 1,
                 w: 64,
                 h: 64
             }
@@ -1001,7 +981,6 @@ Coordinates.prototype.getStart = function () {
  */
 Coordinates.prototype.fromTileCoordinates = function(x, y) {
 
-    console.log(this.start.x, this.tileW)
     return {
         x: this.start.x + (x * this.tileW) - ((x + y) * this.decalX),
         y: this.start.y + ((x + y) * this.decalY)
@@ -1028,14 +1007,12 @@ var Updater = __webpack_require__(19),
  * @param {Camera} camera 
  * @param {config} config 
  */
-var Isometric = function(renderer, displayUpdater, dataUpdater, camera, tileW, tileH) {
+var Isometric = function(renderer, displayUpdater, dataUpdater, camera) {
     this.renderer = renderer;
     this.displayUpdater = displayUpdater;
     this.dataUpdater = dataUpdater;
     this.map = [];
     this.camera = camera;
-    this.tileW = tileW;
-    this.tileH = tileH;
     this.objectUpdater = new Updater("iso");
     this.objects = new Objects();
 }
@@ -1124,8 +1101,7 @@ Isometric.prototype.drawImage = function(img, x, y) {
         return 1;
     }
     var coords = this.camera.getCoordinates().fromTileCoordinates(x, y);
-    //coords contain canvas {x:y} coordinates
-    this.renderer.drawImage(img, coords.x, coords.y, this.tileW, this.tileH);
+    img.render(this.renderer, coords.x, coords.y);
 }
 
 Isometric.prototype.getObjectUpdater = function() {
