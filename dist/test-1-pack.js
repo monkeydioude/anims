@@ -64,379 +64,10 @@
 /******/ })
 /************************************************************************/
 /******/ ([
-/* 0 */
-/***/ (function(module, exports) {
-
-var Updater = function(name) {
-    if (!name) {
-        name = Date.now();
-    }
-    this.name = name;
-    this.nodes = {};
-    this.defaultNameCounter = 0;
-}
-
-/**
- * 
- * @param {int} T 
- */
-Updater.prototype.update = function(mode, T, engine) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return ;
-    }
-    var n = this.nodes[mode],
-        updIt = 0,
-        updSt = 0;
-
-    for (var i in n) {
-        updSt = n[i](T, engine);
-        if (updSt === undefined) {
-            updSt = 1;
-        }
-        if (updSt == -1) {
-            delete n[i];
-            continue;
-        }
-        updIt += updSt;
-    }
-    
-    return updIt;
-}
-
-/**
- * 
- * @param {function} cb
- * @param {string} name 
- * 
- * @return {null|string}
- */
-Updater.prototype.add = function(mode, cb, name) {
-    if (!mode) {
-        return "Mode must be provided";
-    }
-    
-    if (!name) {
-        name = this.defaultNameCounter;
-        this.defaultNameCounter++;
-    }
-
-    if (!this.nodes.hasOwnProperty(mode)) {
-        this.nodes[mode] = {};
-    }
-
-    if (this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not add element to the updater list, name already exists";
-    }
-
-    this.nodes[mode][name] = cb;
-
-    return null;
-}
-
-Updater.prototype.remove = function(mode, name) {
-    if (!this.nodes.hasOwnProperty(mode)) {
-        return "Could not remove element, mode " + mode + " does not exist";
-    }
-
-    if (!this.nodes[mode].hasOwnProperty(name)) {
-        return "Could not remove element, name " + name + " does not exist";
-    }
-
-    delete this.nodes[mode][name];
-
-    return null;
-}
-
-module.exports = Updater;
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-var Renderer = function(sceneCanvas, bufferCanvas) {
-    this.scene = sceneCanvas;
-    this.buffer = bufferCanvas;
-    this.snap = null;
-}
-
-/**
- * Draw a rectangle
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} color 
- */
-Renderer.prototype.draw = function(x, y, w, h, color) {
-   this.buffer.draw(x, y, w, h, color);
-}
-
-/**
- * Draw ImageData element onto engine's canvas
- * @param {*} imgData 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} dx 
- * @param {*} dy 
- */
-Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
-    this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
-}
-/**
- * Draw Image element onto engine's canvas
- * @param {*} Image 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- */
-Renderer.prototype.drawImage = function(image, x, y, w, h) {
-    this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
-}
-
-Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
-    this.buffer.drawLine(fX, fY, tX, tY);
-}
-
-/**
- * Width of the engine's canvas
- * @return int
- */
-Renderer.prototype.width = function() {
-    return this.scene.width();
-}
-
-/**
- * Height of the engine's canvas
- * @return int
- */
-Renderer.prototype.height = function() {
-    return this.scene.height();
-}
-
-/**
- * Return the ImageData version of the whole engine's canvas
- * @return ImageData
- */
-Renderer.prototype.captureScene = function() {
-    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
-}
-
-Renderer.prototype.clear = function() {
-    this.scene.clear();
-    this.buffer.clear();
-}
-
-Renderer.prototype.render = function() {
-    // this.scene.clear();
-    this.scene.drawImageData(
-        this.buffer.c.getImageData(
-            0, 0, this.buffer.width(), this.buffer.height()
-        )
-    );
-    this.buffer.clear();
-}
-
-Renderer.prototype.snapshot = function() {
-    return this.buffer.snapshot();
-}
-
-module.exports = Renderer;
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports) {
-
-var Canvas = function(canvas) {
-    this.canvas = canvas;
-    this.c = this.canvas.getContext('2d');
-}
-
-/**
- * 
- */
-Canvas.prototype.clear = function() {
-    this.c.clearRect(0, 0, this.width(), this.height());
-}
-
-/**
- * @return int
- */
-Canvas.prototype.width = function() {
-    return this.canvas.width;
-}
-
-/**
- * @return int
- */
-Canvas.prototype.height = function() {
-    return this.canvas.height;
-}
-
-Canvas.prototype.drawLine = function(fX, fY, tX, tY) {
-    this.c.moveTo(fX, fY);
-    this.c.lineTo(tX, tY);
-    this.c.stroke();
-}
-
-/**
- * @param int x
- * @param int y
- * @param int w
- * @param int h
- * @param Color color
- */
-Canvas.prototype.draw = function(x, y, w, h, color) {
-    this.c.fillStyle = color.RGBA();
-    this.c.fillRect(x, y, w, h);
- }
-
- Canvas.prototype.drawImage = function(img, x, y, w, h) {
-    if (!x) x = 0;
-    if (!y) y = 0;
-    if (!w) w = this.width();
-    if (!h) h = this.height();
-
-    this.c.drawImage(img, x, y, w, h);
- }
-/**
- * Draw ImageData element onto canvas
- * @param {*} imgData 
- * @param {*} x 
- * @param {*} y 
- * @param {*} w 
- * @param {*} h 
- * @param {*} dx 
- * @param {*} dy 
- */
- Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
-    if (!x) x = 0;
-    if (!y) y = 0;
-    if (!dx) dx = 0;
-    if (!dy) dy = 0;
-    if (!w) w = this.width();
-    if (!h) h = this.height();
-
-    this.c.putImageData(imgData, x, y, dx, dy, w, h);
- }
-
- Canvas.prototype.snapshot = function() {
-     return this.c.getImageData(0, 0, this.width(), this.height());
- }
-
- module.exports = Canvas;
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Updater = __webpack_require__(0);
-
-var Loop = function(fps, engine, startingMode)
-{
-    if (!fps) {
-        console.error("fps parameter needed");
-        return ;
-    }
-
-    // Timestamp of previous loop iteration (not requestAnimationFrame call)
-    this.pT = 0;
-    this.cbSeed = null;
-
-    this.setFrequencies(fps);
-    this.engine = engine;
-    this.dataUpdater = new Updater("data");
-    this.displayUpdater = new Updater("graphic");
-    this.mode = startingMode;
-
-    this.startingConditions = [];
-};
-
-/**
- * @param {*} mode 
- */
-Loop.prototype.setMode = function(mode) {
-    console.info("Setting mode from", this.mode, "to", mode);
-    this.mode = mode;
-}
-
-Loop.prototype.pause = function() {
-    console.info("paused");
-    clearTimeout(this.cbSeed);
-    clearTimeout(this.dSeed);
-}
-
-Loop.prototype.start = function() {
-    if (!this.canStart()) {
-        this.engine.scene.c.fillText("Loading...", 360, 295);            
-        setTimeout(this.start.bind(this), this.miF);
-        return;
-    }
-
-    console.info("started");
-    setTimeout(function(){this.dataLoop(0);}.bind(this), 30);
-    setTimeout(function(){this.displayLoop(0);}.bind(this), 45);
-}
-
-Loop.prototype.addStartingConditions = function(conditions) {
-    this.startingConditions = conditions;
-}
-
-Loop.prototype.canStart = function() {
-    for (i = 0; i < this.startingConditions.length; i++) {
-        if (this.startingConditions[i]() === false) {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
- *  set fps, iF & miF
- * (iF = 1 / FPS, time between too frames)
- * (miF = iF * 1000, time between frames in milliseconds)
- * @param {*} fps 
- */
-Loop.prototype.setFrequencies = function(fps) {
-    this.fps = fps;
-    this.iF = 1 / fps;
-    this.miF = 1000 * this.iF;
-    console.info("setFrequencies("+fps+") = {", "\n\tfps:", fps, "\n\tiF:", this.iF, "\n\tmiF:", this.miF, "\n}");
-}
-
-/**
- * 
- * @param {*} T 
- */
-Loop.prototype.dataLoop = function(T) {
-    var nT = window.performance.now();
-
-    this.dataUpdater.update(this.mode, T);
-    this.cbSeed = setTimeout(function(){this.dataLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
-}
-
-/**
- * 
- * @param {*} T 
- */
-Loop.prototype.displayLoop = function(T) {
-    var nT = window.performance.now(),
-        updStatus = 0;
-
-    updStatus = this.displayUpdater.update(this.mode, T, this.engine);
-    
-    if (updStatus > 0) {
-        this.engine.render();
-    }
-    this.dSeed = setTimeout(function(){this.displayLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
-}
-
-module.exports = Loop;
-
-/***/ }),
+/* 0 */,
+/* 1 */,
+/* 2 */,
+/* 3 */,
 /* 4 */
 /***/ (function(module, exports) {
 
@@ -499,114 +130,20 @@ Browser.prototype.onReady = function(cb) {
 module.exports = Browser;
 
 /***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var CouldNotLoad = __webpack_require__(6),
-    Img = __webpack_require__(20);
-
-var Assets = function() {
-    this.assets = [];
-    this.stillLoadingIt = 0;
-}
-
-/**
- * @param string name
- * @param object data
- * 
- * loadImage starts the asynchronous loading of a single image
- */
-Assets.prototype.loadImage = function(name, data) {
-    if (!data.hasOwnProperty("src")) {
-        return ;
-    }
-    if (!data.hasOwnProperty("dx")) {
-        data.dx = 0;
-    }
-    if (!data.hasOwnProperty("dy")) {
-        data.dy = 0;
-    }
-
-    this.assets[name] = new Img(name, data.src, data.dx, data.dy);
-    
-    this.assetLoadingIt++;
-    this.assets[name].onload = function() {
-        this.assetLoadingIt--;
-    }.bind(this);
-}
-
-/**
- * @param Object imgObject
- * @return CouldNotLoad|null
- * 
- * loadImages loads an Object of images using the form:
- * {"asset_name": "path_to_asset"}
- */
-Assets.prototype.loadImages = function(imgObject) {
-    if (imgObject.constructor !== {}.constructor){
-        return new CouldNotLoad("Assets.loadImages: imgObject is not an Object");
-    }
-
-    for (var k in imgObject) {
-        if (!imgObject.hasOwnProperty(k)) {
-            continue;
-        }
-        this.loadImage(k, imgObject[k]);
-    }
-    
-    return null;
-}
-
-/**
- * @return bool
- * 
- * hasFinishLoading returns the state of the assets loading
- */
-Assets.prototype.hasFinishedLoading = function() {
-    return this.stillLoadingIt === 0;
-}
-
-/**
- * @return Asset
- */
-Assets.prototype.get = function(name) {
-    if (this.assets[name] == undefined) {
-        return null;
-    }
-
-    return this.assets[name];
-}
-
-module.exports = Assets;
-
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-var CouldNotLoad = function(msg) {
-    this.msg = msg;
-}
-
-CouldNotLoad.prototype.error = function() {
-    return "Could not Load: " + this.msg;
-}
-
-module.exports = CouldNotLoad;
-
-/***/ }),
+/* 5 */,
+/* 6 */,
 /* 7 */,
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Graphic = __webpack_require__(1),
-    Canvas = __webpack_require__(2),
-    Loop = __webpack_require__(3),
+var Graphic = __webpack_require__(22),
+    Canvas = __webpack_require__(23),
+    Loop = __webpack_require__(24),
     Logger = __webpack_require__(9),
     Browser = __webpack_require__(4),
     Stack = __webpack_require__(10),
     Color = __webpack_require__(12),
-    Assets = __webpack_require__(5);
+    Assets = __webpack_require__(25);
 
 document.addEventListener("DOMContentLoaded", function() {
     var initialFPS = 30,
@@ -911,7 +448,477 @@ module.exports = Color;
 /* 17 */,
 /* 18 */,
 /* 19 */,
-/* 20 */
+/* 20 */,
+/* 21 */
+/***/ (function(module, exports) {
+
+var Updater = function(name) {
+    if (!name) {
+        name = Date.now();
+    }
+    this.name = name;
+    this.nodes = {};
+    this.defaultNameCounter = 0;
+}
+
+/**
+ * 
+ * @param {int} T 
+ */
+Updater.prototype.update = function(mode, T, engine) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return ;
+    }
+    var n = this.nodes[mode],
+        updIt = 0,
+        updSt = 0;
+
+    for (var i in n) {
+        updSt = n[i](T, engine);
+        if (updSt === undefined) {
+            updSt = 1;
+        }
+        if (updSt == -1) {
+            delete n[i];
+            continue;
+        }
+        updIt += updSt;
+    }
+    
+    return updIt;
+}
+
+/**
+ * 
+ * @param {function} cb
+ * @param {string} name 
+ * 
+ * @return {null|string}
+ */
+Updater.prototype.add = function(mode, cb, name) {
+    if (!mode) {
+        return "Mode must be provided";
+    }
+    
+    if (!name) {
+        name = this.defaultNameCounter;
+        this.defaultNameCounter++;
+    }
+
+    if (!this.nodes.hasOwnProperty(mode)) {
+        this.nodes[mode] = {};
+    }
+
+    if (this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not add element to the updater list, name already exists";
+    }
+
+    this.nodes[mode][name] = cb;
+
+    return null;
+}
+
+Updater.prototype.remove = function(mode, name) {
+    if (!this.nodes.hasOwnProperty(mode)) {
+        return "Could not remove element, mode " + mode + " does not exist";
+    }
+
+    if (!this.nodes[mode].hasOwnProperty(name)) {
+        return "Could not remove element, name " + name + " does not exist";
+    }
+
+    delete this.nodes[mode][name];
+
+    return null;
+}
+
+module.exports = Updater;
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+var Renderer = function(sceneCanvas, bufferCanvas) {
+    this.scene = sceneCanvas;
+    this.buffer = bufferCanvas;
+    this.snap = null;
+}
+
+/**
+ * Draw a rectangle
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} color 
+ */
+Renderer.prototype.draw = function(x, y, w, h, color) {
+   this.buffer.draw(x, y, w, h, color);
+}
+
+/**
+ * Draw ImageData element onto engine's canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
+Renderer.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+    this.buffer.drawImageData(imgData, x, y, w, h, dx, dy);
+}
+/**
+ * Draw Image element onto engine's canvas
+ * @param {*} Image 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ */
+Renderer.prototype.drawImage = function(image, x, y, w, h) {
+    this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
+}
+
+Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.buffer.drawLine(fX, fY, tX, tY);
+}
+
+/**
+ * Width of the engine's canvas
+ * @return int
+ */
+Renderer.prototype.width = function() {
+    return this.scene.width();
+}
+
+/**
+ * Height of the engine's canvas
+ * @return int
+ */
+Renderer.prototype.height = function() {
+    return this.scene.height();
+}
+
+/**
+ * Return the ImageData version of the whole engine's canvas
+ * @return ImageData
+ */
+Renderer.prototype.captureScene = function() {
+    return this.scene.c.getImageData(0, 0, this.scene.width(), this.scene.height());
+}
+
+Renderer.prototype.clear = function() {
+    this.scene.clear();
+    this.buffer.clear();
+}
+
+Renderer.prototype.render = function() {
+    // this.scene.clear();
+    this.scene.drawImageData(
+        this.buffer.c.getImageData(
+            0, 0, this.buffer.width(), this.buffer.height()
+        )
+    );
+    this.buffer.clear();
+}
+
+Renderer.prototype.snapshot = function() {
+    return this.buffer.snapshot();
+}
+
+module.exports = Renderer;
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports) {
+
+var Canvas = function(canvas) {
+    this.canvas = canvas;
+    this.c = this.canvas.getContext('2d');
+}
+
+/**
+ * 
+ */
+Canvas.prototype.clear = function() {
+    this.c.clearRect(0, 0, this.width(), this.height());
+}
+
+/**
+ * @return int
+ */
+Canvas.prototype.width = function() {
+    return this.canvas.width;
+}
+
+/**
+ * @return int
+ */
+Canvas.prototype.height = function() {
+    return this.canvas.height;
+}
+
+Canvas.prototype.drawLine = function(fX, fY, tX, tY) {
+    this.c.moveTo(fX, fY);
+    this.c.lineTo(tX, tY);
+    this.c.stroke();
+}
+
+/**
+ * @param int x
+ * @param int y
+ * @param int w
+ * @param int h
+ * @param Color color
+ */
+Canvas.prototype.draw = function(x, y, w, h, color) {
+    this.c.fillStyle = color.RGBA();
+    this.c.fillRect(x, y, w, h);
+ }
+
+ Canvas.prototype.drawImage = function(img, x, y, w, h) {
+    if (!x) x = 0;
+    if (!y) y = 0;
+    if (!w) w = this.width();
+    if (!h) h = this.height();
+
+    this.c.drawImage(img, x, y, w, h);
+ }
+/**
+ * Draw ImageData element onto canvas
+ * @param {*} imgData 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} w 
+ * @param {*} h 
+ * @param {*} dx 
+ * @param {*} dy 
+ */
+ Canvas.prototype.drawImageData = function(imgData, x, y, w, h, dx, dy) {
+    if (!x) x = 0;
+    if (!y) y = 0;
+    if (!dx) dx = 0;
+    if (!dy) dy = 0;
+    if (!w) w = this.width();
+    if (!h) h = this.height();
+
+    this.c.putImageData(imgData, x, y, dx, dy, w, h);
+ }
+
+ Canvas.prototype.snapshot = function() {
+     return this.c.getImageData(0, 0, this.width(), this.height());
+ }
+
+ module.exports = Canvas;
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Updater = __webpack_require__(21);
+
+var Loop = function(fps, engine, startingMode)
+{
+    if (!fps) {
+        console.error("fps parameter needed");
+        return ;
+    }
+
+    // Timestamp of previous loop iteration (not requestAnimationFrame call)
+    this.pT = 0;
+    this.cbSeed = null;
+
+    this.setFrequencies(fps);
+    this.engine = engine;
+    this.dataUpdater = new Updater("data");
+    this.displayUpdater = new Updater("graphic");
+    this.mode = startingMode;
+
+    this.startingConditions = [];
+};
+
+/**
+ * @param {*} mode 
+ */
+Loop.prototype.setMode = function(mode) {
+    console.info("Setting mode from", this.mode, "to", mode);
+    this.mode = mode;
+}
+
+Loop.prototype.pause = function() {
+    console.info("paused");
+    clearTimeout(this.cbSeed);
+    clearTimeout(this.dSeed);
+}
+
+Loop.prototype.start = function() {
+    if (!this.canStart()) {
+        this.engine.scene.c.fillText("Loading...", 360, 295);            
+        setTimeout(this.start.bind(this), this.miF);
+        return;
+    }
+
+    console.info("started");
+    setTimeout(function(){this.dataLoop(0);}.bind(this), 30);
+    setTimeout(function(){this.displayLoop(0);}.bind(this), 45);
+}
+
+Loop.prototype.addStartingConditions = function(conditions) {
+    this.startingConditions = conditions;
+}
+
+Loop.prototype.canStart = function() {
+    for (i = 0; i < this.startingConditions.length; i++) {
+        if (this.startingConditions[i]() === false) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ *  set fps, iF & miF
+ * (iF = 1 / FPS, time between too frames)
+ * (miF = iF * 1000, time between frames in milliseconds)
+ * @param {*} fps 
+ */
+Loop.prototype.setFrequencies = function(fps) {
+    this.fps = fps;
+    this.iF = 1 / fps;
+    this.miF = 1000 * this.iF;
+    console.info("setFrequencies("+fps+") = {", "\n\tfps:", fps, "\n\tiF:", this.iF, "\n\tmiF:", this.miF, "\n}");
+}
+
+/**
+ * 
+ * @param {*} T 
+ */
+Loop.prototype.dataLoop = function(T) {
+    var nT = window.performance.now();
+
+    this.dataUpdater.update(this.mode, T);
+    this.cbSeed = setTimeout(function(){this.dataLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
+}
+
+/**
+ * 
+ * @param {*} T 
+ */
+Loop.prototype.displayLoop = function(T) {
+    var nT = window.performance.now(),
+        updStatus = 0;
+
+    updStatus = this.displayUpdater.update(this.mode, T, this.engine);
+    
+    if (updStatus > 0) {
+        this.engine.render();
+    }
+    this.dSeed = setTimeout(function(){this.displayLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
+}
+
+module.exports = Loop;
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var CouldNotLoad = __webpack_require__(26),
+    Img = __webpack_require__(27);
+
+var Assets = function() {
+    this.assets = [];
+    this.stillLoadingIt = 0;
+}
+
+/**
+ * @param string name
+ * @param object data
+ * 
+ * loadImage starts the asynchronous loading of a single image
+ */
+Assets.prototype.loadImage = function(name, data) {
+    if (!data.hasOwnProperty("src")) {
+        return ;
+    }
+    if (!data.hasOwnProperty("dx")) {
+        data.dx = 0;
+    }
+    if (!data.hasOwnProperty("dy")) {
+        data.dy = 0;
+    }
+
+    this.assets[name] = new Img(name, data.src, data.dx, data.dy);
+    
+    this.assetLoadingIt++;
+    this.assets[name].onload = function() {
+        this.assetLoadingIt--;
+    }.bind(this);
+}
+
+/**
+ * @param Object imgObject
+ * @return CouldNotLoad|null
+ * 
+ * loadImages loads an Object of images using the form:
+ * {"asset_name": "path_to_asset"}
+ */
+Assets.prototype.loadImages = function(imgObject) {
+    if (imgObject.constructor !== {}.constructor){
+        return new CouldNotLoad("Assets.loadImages: imgObject is not an Object");
+    }
+
+    for (var k in imgObject) {
+        if (!imgObject.hasOwnProperty(k)) {
+            continue;
+        }
+        this.loadImage(k, imgObject[k]);
+    }
+    
+    return null;
+}
+
+/**
+ * @return bool
+ * 
+ * hasFinishLoading returns the state of the assets loading
+ */
+Assets.prototype.hasFinishedLoading = function() {
+    return this.stillLoadingIt === 0;
+}
+
+/**
+ * @return Asset
+ */
+Assets.prototype.get = function(name) {
+    if (this.assets[name] == undefined) {
+        return null;
+    }
+
+    return this.assets[name];
+}
+
+module.exports = Assets;
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports) {
+
+var CouldNotLoad = function(msg) {
+    this.msg = msg;
+}
+
+CouldNotLoad.prototype.error = function() {
+    return "Could not Load: " + this.msg;
+}
+
+module.exports = CouldNotLoad;
+
+/***/ }),
+/* 27 */
 /***/ (function(module, exports) {
 
 var Img = function(name, src, dX, dY) {
