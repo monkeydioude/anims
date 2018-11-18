@@ -669,8 +669,8 @@ var Renderer = __webpack_require__(0),
     Assets = __webpack_require__(5);
 
 document.addEventListener("DOMContentLoaded", function() {
-    var initialFPS = 30,
-        graphic = new Graphic(
+    var initialFPS = 60,
+        graphic = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
         ),

@@ -8,8 +8,8 @@ var Renderer = require('gloop/renderer'),
     Assets = require('gloop/assets/assets');
 
 document.addEventListener("DOMContentLoaded", function() {
-    var initialFPS = 30,
-        graphic = new Graphic(
+    var initialFPS = 60,
+        graphic = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
         ),
