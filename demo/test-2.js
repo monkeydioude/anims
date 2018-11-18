@@ -40,17 +40,29 @@ var Renderer = require('gloop/renderer'),
             "0_0": {
                 src: "/assets/map/tiles/0_0.png",
                 dx: 0,
-                dy: 0
+                dy: 0,
+                ix: 1,
+                iy: 1,
+                w: 64,
+                h: 64
             },
             "0_1": {
                 src: "/assets/map/tiles/0_1.png",
                 dx: 0,
-                dy: 0
+                dy: 0,
+                ix: 1,
+                iy: 1,
+                w: 64,
+                h: 64
             },
             "building1": {
                 src: "/assets/building/building1.png",
                 dx: 0,
-                dy: -32
+                dy: -32,
+                ix: 1,
+                iy: 1,
+                w: 64,
+                h: 64
             }
         }
     );

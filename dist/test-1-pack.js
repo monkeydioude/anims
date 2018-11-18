@@ -110,6 +110,10 @@ Renderer.prototype.drawImage = function(image, x, y, w, h) {
     this.buffer.drawImage(image.getAsset(), x + image.getDecalX(), y + image.getDecalY(), w, h);
 }
 
+Renderer.prototype.drawAsset = function(image, x, y) {
+    image.render(this.buffer, x, y);
+}
+
 Renderer.prototype.drawLine = function(fX, fY, tX, tY) {
     this.buffer.drawLine(fX, fY, tX, tY);
 }
@@ -249,7 +253,7 @@ Canvas.prototype.draw = function(x, y, w, h, color) {
 
 var Updater = __webpack_require__(3);
 
-var Loop = function(fps, engine, startingMode)
+var Loop = function(fps, renderer, startingMode)
 {
     if (!fps) {
         console.error("fps parameter needed");
@@ -261,7 +265,7 @@ var Loop = function(fps, engine, startingMode)
     this.cbSeed = null;
 
     this.setFrequencies(fps);
-    this.engine = engine;
+    this.renderer = renderer;
     this.dataUpdater = new Updater("data");
     this.displayUpdater = new Updater("graphic");
     this.mode = startingMode;
@@ -285,7 +289,7 @@ Loop.prototype.pause = function() {
 
 Loop.prototype.start = function() {
     if (!this.canStart()) {
-        this.engine.scene.c.fillText("Loading...", 360, 295);            
+        this.renderer.scene.c.fillText("Loading...", 360, 295);            
         setTimeout(this.start.bind(this), this.miF);
         return;
     }
@@ -340,15 +344,16 @@ Loop.prototype.displayLoop = function(T) {
     var nT = window.performance.now(),
         updStatus = 0;
 
-    updStatus = this.displayUpdater.update(this.mode, T, this.engine);
+    updStatus = this.displayUpdater.update(this.mode, T, this.renderer);
     
     if (updStatus > 0) {
-        this.engine.render();
+        this.renderer.render();
     }
     this.dSeed = setTimeout(function(){this.displayLoop(this.miF);}.bind(this), T - (window.performance.now() - nT));
 }
 
 module.exports = Loop;
+
 
 /***/ }),
 /* 3 */
@@ -527,7 +532,7 @@ Assets.prototype.loadImage = function(name, data) {
         data.dy = 0;
     }
 
-    this.assets[name] = new Img(name, data.src, data.dx, data.dy);
+    this.assets[name] = new Img(name, data.src, data.dx, data.dy, data.ix, data.iy, data.w, data.h);
     
     this.assetLoadingIt++;
     this.assets[name].onload = function() {
@@ -598,7 +603,7 @@ module.exports = CouldNotLoad;
 /* 7 */
 /***/ (function(module, exports) {
 
-var Img = function(name, src, dX, dY) {
+var Img = function(name, src, dX, dY, ix, iy, w, h) {
     if (name === undefined) {
         console.error("An Image requires a name");
     }
@@ -611,11 +616,26 @@ var Img = function(name, src, dX, dY) {
     if (dY === undefined) {
         dY = 0;
     }
-
+    if (ix === undefined) {
+        ix = 1;
+    }
+    if (iy === undefined) {
+        iy = 1;
+    }
+    if (w === undefined) {
+        w = 64;
+    }
+    if (h === undefined) {
+        h = 64;
+    }
     this.name = name;
     this.src = src;
     this.dX = dX;
     this.dY = dY;
+    this.ix = ix;
+    this.iy = iy;
+    this.w = w;
+    this.h = h;
     this.asset = new Image()
     this.asset.src = src;
     this.asset.crossOrigin = "Anonymous";
@@ -638,6 +658,10 @@ Img.prototype.getDecal = function() {
 
 Img.prototype.getAsset = function() {
     return this.asset;
+}
+
+Img.prototype.render = function (renderer, x, y) {
+    renderer.drawImage(this.getAsset(), x, y, this.w, this.h)
 }
 
 module.exports = Img;
