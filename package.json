@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "zizo": "git+https://github.com/monkeydioude/zizo.git",
-    "gloop": "git+https://github.com/monkeydioude/gloop.git"
+    "gloop": "git+https://github.com/monkeydioude/gloop.git#feature/add-framesets"
   },
   "devDependencies": {
     "webpack": "^3.10.0"
