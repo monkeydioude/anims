@@ -504,77 +504,76 @@ module.exports = Browser;
 /***/ (function(module, exports, __webpack_require__) {
 
 var CouldNotLoad = __webpack_require__(6),
-    Img = __webpack_require__(7);
+    Img = __webpack_require__(7),
+    Frameset = __webpack_require__(21);
 
 var Assets = function(basePath) {
     this.assets = [];
     this.stillLoadingIt = 0;
     this.basePath = basePath;
+    this.loadedCb = [];
 }
 
-Assets.prototype.loadFramesets = function(fss) {
-    var req = null,
-        self = this;
+Assets.prototype.loadFrameset = function(name, data, frameset, cb) {
+    var img = new Img(name, data);
 
-    for (i = 0; i < fss.length; i++) {
-        req = new Request('../assets/frameset/rebot.json');
-        fetch(req).then(function(res) {
-            self.stillLoadingIt++;
-            res.json().then(function(data) {
-                self.loadImage(data.meta.name, {
-                    src: self.basePath + "/frameset/" + data.meta.file,
-                    x: 0,
-                    y: 0,
-                    w: data.meta.size.w,
-                    h: data.meta.size.h
-                })
-            });
-        })
-    }
+    img.loadWithCallback(
+        function (img) {
+            var fs = new Frameset(name, frameset, img);
+            this.assets[data.name] = fs;
+            cb(fs)
+        }.bind(this)
+    )
 }
 
 /**
  * @param string name
  * @param object data
+ * @param function cb
  * 
  * loadImage starts the asynchronous loading of a single image
  */
-Assets.prototype.loadImage = function(name, data) {
-    if (!data.hasOwnProperty("src")) {
-        return ;
-    }
-    if (!data.hasOwnProperty("dx")) {
-        data.dx = 0;
-    }
-    if (!data.hasOwnProperty("dy")) {
-        data.dy = 0;
-    }
-
-    this.assets[name] = new Img(name, data.src, data.dx, data.dy, data.w, data.h);
+Assets.prototype.loadImage = function(name, data, cb) {
+    this.assets[name] = new Img(name, data);
     
     this.assetLoadingIt++;
-    this.assets[name].onload = function() {
+    this.assets[name].loadWithCallback(function() {
+        if (cb !== undefined) {
+            cb(this.assets[name]);
+        }
         this.assetLoadingIt--;
-    }.bind(this);
+        if (this.hasFinishedLoading) {
+            this.triggerOnLoaded()
+        }
+    }.bind(this));
 }
 
 /**
- * @param Object imgObject
+ * @param Object assetObject
+ * @param function cb
  * @return CouldNotLoad|null
  * 
  * loadImages loads an Object of images using the form:
  * {"asset_name": "path_to_asset"}
  */
-Assets.prototype.loadImages = function(imgObject) {
-    if (imgObject.constructor !== {}.constructor){
-        return new CouldNotLoad("Assets.loadImages: imgObject is not an Object");
+Assets.prototype.load = function(assetObject, cb) {
+    if (assetObject.constructor !== {}.constructor){
+        return new CouldNotLoad("Assets.loadImages: assetObject is not an Object");
     }
 
-    for (var k in imgObject) {
-        if (!imgObject.hasOwnProperty(k)) {
+    for (var k in assetObject) {
+        if (!assetObject.hasOwnProperty(k)) {
             continue;
         }
-        this.loadImage(k, imgObject[k]);
+        switch (assetObject[k].type) {
+            case 'image':
+                this.loadImage(k, assetObject[k].data, cb);
+            break;
+            case 'frameset':
+                this.loadFrameset(k, assetObject[k].data, assetObject[k].frames, cb);
+            default:
+                console.log("Dunno how to load this Mista")
+        }
     }
     
     return null;
@@ -600,6 +599,17 @@ Assets.prototype.get = function(name) {
     return this.assets[name];
 }
 
+Assets.prototype.onLoaded = function(cb) {
+    this.loadedCb.push(cb);
+}
+
+Assets.prototype.triggerOnLoaded = function() {
+    for (i = 0; i < this.loadedCb.length; i++) {
+        this.loadedCb[i](this.assets);
+    }
+    this.loadedCb = [];
+}
+
 module.exports = Assets;
 
 
@@ -621,42 +631,51 @@ module.exports = CouldNotLoad;
 /* 7 */
 /***/ (function(module, exports) {
 
-var Img = function(name, src, dX, dY, w, h) {
+var Img = function(name, data) {
     if (name === undefined) {
         console.error("An Image requires a name");
     }
-    if (src === undefined) {
+    if (data.src === undefined) {
         console.error("An Image requires a source");
     }
-    if (dX === undefined) {
-        dX = 0;
+    if (!data.hasOwnProperty("src")) {
+        return ;
     }
-    if (dY === undefined) {
-        dY = 0;
+    if (!data.hasOwnProperty("dx")) {
+        data.dx = 0;
     }
-    if (w === undefined) {
-        w = 64;
+    if (!data.hasOwnProperty("dy")) {
+        data.dy = 0;
     }
-    if (h === undefined) {
-        h = 64;
+    if (data.dx === undefined) {
+        data.dx = 0;
+    }
+    if (data.dy === undefined) {
+        data.dy = 0;
+    }
+    if (data.w === undefined) {
+        data.w = 64;
+    }
+    if (data.h === undefined) {
+        data.h = 64;
     }
     this.name = name;
-    this.src = src;
-    this.dX = dX;
-    this.dY = dY;
-    this.w = w;
-    this.h = h;
+    this.src = data.src;
+    this.dx = data.dx;
+    this.dy = data.dy;
+    this.w = data.w;
+    this.h = data.h;
     this.asset = new Image()
-    this.asset.src = src;
+    this.asset.src = data.src;
     this.asset.crossOrigin = "Anonymous";
 }
 
 Img.prototype.getDecalX = function() {
-    return this.dX;
+    return this.dx;
 }
 
 Img.prototype.getDecalY = function() {
-    return this.dY;
+    return this.dy;
 }
 
 Img.prototype.getDecal = function() {
@@ -672,6 +691,10 @@ Img.prototype.getAsset = function() {
 
 Img.prototype.render = function (renderer, x, y) {
     renderer.drawImage(this.getAsset(), x + this.getDecalX(), y + this.getDecalY(), this.w, this.h);
+}
+
+Img.prototype.loadWithCallback = function(cb) {
+    this.asset.onload = cb;
 }
 
 module.exports = Img;
@@ -708,9 +731,6 @@ var Renderer = __webpack_require__(0),
             config.isoDecalX,
             config.isoDecalY
         )),
-        framesets = [
-            'rebot.json'
-        ],
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
@@ -724,40 +744,16 @@ var Renderer = __webpack_require__(0),
         ),
         assets = new Assets("../assets");
     
-    var err = assets.loadImages(
-        {
-            "0_0": {
-                src: "../assets/map/tiles/0_0.png",
-                type: "image",
-                dx: 0,
-                dy: 0,
-                w: 64,
-                h: 64
-            },
-            "0_1": {
-                src: "../assets/map/tiles/0_1.png",
-                type: "image",
-                dx: 0,
-                dy: 0,
-                w: 64,
-                h: 64
-            },
-            "building1": {
-                src: "../assets/building/building1.png",
-                type: "image",
-                dx: 0,
-                dy: -32,
-                w: 64,
-                h: 64
+    fetch(new Request('../assets/assets.json')).then(function(res) {
+        res.json().then(function(data) {
+            var err = assets.load(data, function(asset) {
+                console.log("Just loaded " + asset.name);
+            });
+            if (err != null) {
+                console.log(err.error());
             }
-        }
-    );
-
-    if (err != null) {
-        console.log(err.error());
-    }
-
-    assets.loadFramesets(framesets);
+        });
+    });
 
     var map = new Map([
             ['0_0', '0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
@@ -785,7 +781,8 @@ var Renderer = __webpack_require__(0),
     engine.setMap(map);
     engine.start();
 
-    map.loadMap();
+    assets.onLoaded(map.loadMap.bind(map));
+    // map.loadMap();
 
     loop.setMode("PLAY");
     loop.addStartingConditions([
@@ -872,6 +869,7 @@ Map.prototype.loadMap = function() {
 }
 
 module.exports = Map;
+
 
 /***/ }),
 /* 15 */
@@ -1284,6 +1282,55 @@ Objects.prototype.add = function(entity, x, y, z) {
 }
 
 module.exports = Objects;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+var Frameset = function(name, frames, sprite) {
+    if (name === undefined) {
+        console.error("A Frameset requires a name");
+    }
+    if (frames === undefined) {
+        console.error("A Frameset requires frames");
+    }
+    if (sprite === undefined) {
+        console.error("A Frameset requires a sprite (et ca redemarre)");
+    }
+    this.name = name;
+    this.frames = frames;
+    this.sprite = sprite;
+}
+
+Frameset.prototype.getNext = function () {
+
+}
+
+// Img.prototype.getDecalX = function() {
+//     return this.dX;
+// }
+
+// Img.prototype.getDecalY = function() {
+//     return this.dY;
+// }
+
+// Img.prototype.getDecal = function() {
+//     return {
+//         x: this.getDecalX(),
+//         y: this.getDecalY()
+//     }
+// }
+
+// Img.prototype.getAsset = function() {
+//     return this.asset;
+// }
+
+// Img.prototype.render = function (renderer, x, y) {
+//     renderer.drawImage(this.getAsset(), x + this.getDecalX(), y + this.getDecalY(), this.w, this.h);
+// }
+
+module.exports = Frameset;
 
 
 /***/ })

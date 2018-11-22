@@ -20,9 +20,6 @@ var Renderer = require('gloop/renderer'),
             config.isoDecalX,
             config.isoDecalY
         )),
-        framesets = [
-            'rebot.json'
-        ],
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
@@ -36,40 +33,16 @@ var Renderer = require('gloop/renderer'),
         ),
         assets = new Assets("../assets");
     
-    var err = assets.loadImages(
-        {
-            "0_0": {
-                src: "../assets/map/tiles/0_0.png",
-                type: "image",
-                dx: 0,
-                dy: 0,
-                w: 64,
-                h: 64
-            },
-            "0_1": {
-                src: "../assets/map/tiles/0_1.png",
-                type: "image",
-                dx: 0,
-                dy: 0,
-                w: 64,
-                h: 64
-            },
-            "building1": {
-                src: "../assets/building/building1.png",
-                type: "image",
-                dx: 0,
-                dy: -32,
-                w: 64,
-                h: 64
+    fetch(new Request('../assets/assets.json')).then(function(res) {
+        res.json().then(function(data) {
+            var err = assets.load(data, function(asset) {
+                console.log("Just loaded " + asset.name);
+            });
+            if (err != null) {
+                console.log(err.error());
             }
-        }
-    );
-
-    if (err != null) {
-        console.log(err.error());
-    }
-
-    assets.loadFramesets(framesets);
+        });
+    });
 
     var map = new Map([
             ['0_0', '0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
@@ -97,7 +70,8 @@ var Renderer = require('gloop/renderer'),
     engine.setMap(map);
     engine.start();
 
-    map.loadMap();
+    assets.onLoaded(map.loadMap.bind(map));
+    // map.loadMap();
 
     loop.setMode("PLAY");
     loop.addStartingConditions([
