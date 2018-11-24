@@ -1,14 +1,15 @@
-var Renderer = require('gloop/renderer'),
-    Canvas = require('gloop/canvas'),
-    Loop = require('gloop/loop'),
+var 
     Map = require('zizo/map'),
     Assets = require('gloop/assets/assets'),
     Camera = require('zizo/camera'),
     Coord = require('zizo/coordinates'),
     Engine = require('zizo/isometric');
 
-import { config } from "../src/config";
-import { Browser } from "../src/browser";
+import {config} from "../src/config"
+import {Browser} from "../src/browser"
+import {Canvas} from "gloop/canvas"
+import {Renderer} from "gloop/renderer"
+import {Loop} from "gloop/loop"
 
 (new Browser()).onReady(function() {
     var camera = new Camera(
