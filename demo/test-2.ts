@@ -1,17 +1,17 @@
-var Renderer = require('gloop/renderer'),
-    Canvas = require('gloop/canvas'),
-    Loop = require('gloop/loop'),
-    Map = require('zizo/map'),
-    Browser = require('../src/browser'),
-    Assets = require('gloop/assets/assets'),
-    Camera = require('zizo/camera'),
-    config = require('../src/config'),
-    Coord = require('zizo/coordinates'),
-    Engine = require('zizo/isometric');
+import {config} from "../src/config"
+import {Browser} from "../src/browser"
+import {Canvas} from "gloop/canvas"
+import {Renderer} from "gloop/renderer"
+import {Loop} from "gloop/loop"
+import {Camera} from "zizo/camera"
+import {Coordinates} from "zizo/coordinates"
+import {Map} from "zizo/map"
+import {Isometric} from "zizo/isometric"
+import {Loader} from "gloop/assets/loader"
 
 (new Browser()).onReady(function() {
     var camera = new Camera(
-        new Coord(
+        new Coordinates(
             2.5,
             6.5,
             config.canvasMX,
@@ -24,18 +24,18 @@ var Renderer = require('gloop/renderer'),
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
         ),
-        loop = new Loop(15, renderer),
-        engine = new Engine(
+        loop = new Loop(30, renderer),
+        engine = new Isometric(
             renderer,
             loop.displayUpdater,
             loop.dataUpdater,
             camera
         ),
-        assets = new Assets("../assets");
+        assets = new Loader("../assets");
     
     fetch(new Request('../assets/assets.json')).then(function(res) {
         res.json().then(function(data) {
-            var err = assets.load(data, function(asset) {
+            var err = assets.load(data, function(asset: any) {
                 console.log("Just loaded " + asset.name);
             });
             if (err != null) {
@@ -70,7 +70,7 @@ var Renderer = require('gloop/renderer'),
     engine.setMap(map);
     engine.start();
 
-    assets.onLoaded(map.loadMap.bind(map));
+    assets.onLoaded(() => map.loadMap());
     // map.loadMap();
 
     loop.setMode("PLAY");
@@ -79,13 +79,14 @@ var Renderer = require('gloop/renderer'),
     ]);
     loop.start();
 
-    engine.objectUpdater.add("PLAY", function(T, objects) {
+    engine.objectUpdater.add("PLAY", function(T: number, objects: any) {
         objects.add(assets.get("building1"), 1, 3);
         objects.add(assets.get("building1"), 3, 8);
         objects.add(assets.get("building1"), 6, 2);
         objects.add(assets.get("building1"), 14, 7);
         objects.add(assets.get("building1"), 9, 14);
         objects.add(assets.get("building1"), 10, 10);
+        objects.add(assets.get("rebot-sprite"), 0, 0);
     }, "buildings")
 
     loop.displayUpdater.add("PLAY", function() {
@@ -95,8 +96,8 @@ var Renderer = require('gloop/renderer'),
     }, "camera");
 
     var cameraTileMove = 0.25;
-    var buildings = {};
-    var pressFunc = {
+    var buildings: any = {};
+    var pressFunc: any = {
         "z": function(){
             camera.addY(-cameraTileMove)
         },
@@ -125,7 +126,7 @@ var Renderer = require('gloop/renderer'),
                 y: camera.coord.icY
             }
 
-            engine.objectUpdater.add("PLAY", function(T, objects) {
+            engine.objectUpdater.add("PLAY", function(T: number, objects: any) {
                 objects.add(assets.get("building1"), buildings[label].x << 0, buildings[label].y << 0, 10)
             }, label)
         }

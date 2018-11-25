@@ -4,11 +4,15 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "zizo": "git+https://github.com/monkeydioude/zizo.git",
-    "gloop": "git+https://github.com/monkeydioude/gloop.git"
+    "@types/node": "^10.12.10",
+    "gloop": "git+https://github.com/monkeydioude/gloop.git#feature/add-framesets",
+    "zizo": "git+https://github.com/monkeydioude/zizo.git"
   },
   "devDependencies": {
-    "webpack": "^3.10.0"
+    "ts-loader": "^5.3.0",
+    "typescript": "^3.1.6",
+    "webpack": "^4",
+    "webpack-cli": "^3.1.2"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
