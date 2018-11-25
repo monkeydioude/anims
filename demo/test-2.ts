@@ -1,19 +1,17 @@
-var 
-    Map = require('zizo/map'),
-    Assets = require('gloop/assets/assets'),
-    Camera = require('zizo/camera'),
-    Coord = require('zizo/coordinates'),
-    Engine = require('zizo/isometric');
-
 import {config} from "../src/config"
 import {Browser} from "../src/browser"
 import {Canvas} from "gloop/canvas"
 import {Renderer} from "gloop/renderer"
 import {Loop} from "gloop/loop"
+import {Camera} from "zizo/camera"
+import {Coordinates} from "zizo/coordinates"
+import {Map} from "zizo/map"
+import {Isometric} from "zizo/isometric"
+import {Assets} from "gloop/assets/assets"
 
 (new Browser()).onReady(function() {
     var camera = new Camera(
-        new Coord(
+        new Coordinates(
             2.5,
             6.5,
             config.canvasMX,
@@ -27,7 +25,7 @@ import {Loop} from "gloop/loop"
             new Canvas(document.querySelector('#buffer'))
         ),
         loop = new Loop(15, renderer),
-        engine = new Engine(
+        engine = new Isometric(
             renderer,
             loop.displayUpdater,
             loop.dataUpdater,
