@@ -7,7 +7,7 @@ import {Camera} from "zizo/camera"
 import {Coordinates} from "zizo/coordinates"
 import {Map} from "zizo/map"
 import {Isometric} from "zizo/isometric"
-import {Assets} from "gloop/assets/assets"
+import {Loader} from "gloop/assets/loader"
 
 (new Browser()).onReady(function() {
     var camera = new Camera(
@@ -24,14 +24,14 @@ import {Assets} from "gloop/assets/assets"
             new Canvas(document.querySelector("#board")),
             new Canvas(document.querySelector('#buffer'))
         ),
-        loop = new Loop(15, renderer),
+        loop = new Loop(30, renderer),
         engine = new Isometric(
             renderer,
             loop.displayUpdater,
             loop.dataUpdater,
             camera
         ),
-        assets = new Assets("../assets");
+        assets = new Loader("../assets");
     
     fetch(new Request('../assets/assets.json')).then(function(res) {
         res.json().then(function(data) {
@@ -70,7 +70,7 @@ import {Assets} from "gloop/assets/assets"
     engine.setMap(map);
     engine.start();
 
-    assets.onLoaded(map.loadMap.bind(map));
+    assets.onLoaded(() => map.loadMap());
     // map.loadMap();
 
     loop.setMode("PLAY");
@@ -86,6 +86,7 @@ import {Assets} from "gloop/assets/assets"
         objects.add(assets.get("building1"), 14, 7);
         objects.add(assets.get("building1"), 9, 14);
         objects.add(assets.get("building1"), 10, 10);
+        objects.add(assets.get("rebot-sprite"), 0, 0);
     }, "buildings")
 
     loop.displayUpdater.add("PLAY", function() {

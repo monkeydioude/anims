@@ -142,7 +142,7 @@
     ],
     "data": {
       "dx": 0,
-      "dy": 0,
+      "dy": -15,
       "w": 768,
       "h": 32,
       "src": "../assets/frameset/rebot.png"
