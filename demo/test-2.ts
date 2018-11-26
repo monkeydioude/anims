@@ -12,13 +12,13 @@ import {Loader} from "gloop/assets/loader"
 (new Browser()).onReady(function() {
     var camera = new Camera(
         new Coordinates(
-            2.5,
-            6.5,
-            config.canvasMX,
-            config.canvasMY,
             config.tileTopW,
             config.isoDecalX,
-            config.isoDecalY
+            config.isoDecalY,
+            6.5,
+            6.5,
+            config.canvasMX,
+            config.canvasMY
         )),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
@@ -43,6 +43,7 @@ import {Loader} from "gloop/assets/loader"
             }
         });
     });
+    console.log(new Coordinates(64, 32, 16, 0, 0, 0, 0).fromTileCoordinates(3, 0))
 
     var map = new Map([
             ['0_0', '0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
@@ -71,7 +72,6 @@ import {Loader} from "gloop/assets/loader"
     engine.start();
 
     assets.onLoaded(() => map.loadMap());
-    // map.loadMap();
 
     loop.setMode("PLAY");
     loop.addStartingConditions([
@@ -96,7 +96,8 @@ import {Loader} from "gloop/assets/loader"
     }, "camera");
 
     var cameraTileMove = 0.25;
-    var buildings: any = {};
+    var buildings: any = {},
+        anims: any = {};
     var pressFunc: any = {
         "z": function(){
             camera.addY(-cameraTileMove)
@@ -117,18 +118,65 @@ import {Loader} from "gloop/assets/loader"
             camera.addX(-cameraTileMove)
         },
         " ": function() {
-            var label = "building-" + camera.coord.icX + camera.coord.icY;
-            if (buildings.hasOwnProperty(label)){
-                return
-            }
-            buildings[label] = {
-                x: camera.coord.icX,
-                y: camera.coord.icY
+            let label = "building-" + (camera.coord.icX << 0) + (camera.coord.icY << 0);
+            if (!buildings.hasOwnProperty(label)){
+                buildings[label] = {
+                    x: camera.coord.icX,
+                    y: camera.coord.icY,
+                    rv: 0
+                }
+            } else {
+                buildings[label].rv = -1
             }
 
             engine.objectUpdater.add("PLAY", function(T: number, objects: any) {
                 objects.add(assets.get("building1"), buildings[label].x << 0, buildings[label].y << 0, 10)
+                let rv = buildings[label].rv;
+                if (rv == -1) {
+                    delete buildings[label];
+                }
+                return rv
             }, label)
+        },
+        "c": () => {
+            let clabel = "rebot-" + (camera.coord.icX << 0) + (camera.coord.icY << 0);
+            if (!anims.hasOwnProperty(clabel)){
+                let e = assets.copy("rebot-sprite"),
+                c = new Coordinates(
+                        config.tileTopW,
+                        config.isoDecalX,
+                        config.isoDecalY,
+                        0,
+                        0,
+                        0,
+                        0
+                    );
+                    // c.computeCenter()
+                
+                let cc = c.fromTileCoordinates(
+                    camera.coord.icX - (camera.coord.icX << 0),
+                    camera.coord.icX - (camera.coord.icX << 0)
+                )
+                e.sprite.dx = cc.x
+                e.sprite.dy = cc.y - 32
+                anims[clabel] = {
+                    entity: e,
+                    x: camera.coord.icX,
+                    y: camera.coord.icY,
+                    rv : 0
+                }
+            } else {
+                anims[clabel].rv = -1
+            }
+            engine.objectUpdater.add("PLAY", function(T: number, objects: any) {
+                objects.add(anims[clabel].entity, anims[clabel].x << 0, anims[clabel].y << 0);
+                let rv = anims[clabel].rv;
+                if (rv == -1) {
+                    delete anims[clabel]
+                }
+                return rv
+            }, clabel)
+                // objects.add(assets.get("rebot-sprite"), buildings[label].x << 0, buildings[label].y << 0);
         }
     }
     document.addEventListener("keydown", function(e) {
