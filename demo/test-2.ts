@@ -8,17 +8,17 @@ import {Coordinates} from "zizo/coordinates"
 import {Map} from "zizo/map"
 import {Isometric} from "zizo/isometric"
 import {Loader} from "gloop/assets/loader"
+import { Frameset } from "../../gloop/assets/frameset";
 
 (new Browser()).onReady(function() {
-    var camera = new Camera(
-        new Coordinates(
-            config.tileTopW,
-            config.isoDecalX,
-            config.isoDecalY,
+    let camera = new Camera(new Coordinates(
             6.5,
             6.5,
             config.canvasMX,
-            config.canvasMY
+            config.canvasMY,
+            config.tileTopW,
+            config.isoDecalX,
+            config.isoDecalY
         )),
         renderer = new Renderer(
             new Canvas(document.querySelector("#board")),
@@ -43,7 +43,7 @@ import {Loader} from "gloop/assets/loader"
             }
         });
     });
-    console.log(new Coordinates(64, 32, 16, 0, 0, 0, 0).fromTileCoordinates(3, 0))
+    // console.log(new Coordinates(64, 32, 16, 0, 0, 0, 0).fromTileCoordinates(3, 0))
 
     var map = new Map([
             ['0_0', '0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
@@ -79,6 +79,7 @@ import {Loader} from "gloop/assets/loader"
     ]);
     loop.start();
 
+    let originalBoi = assets.copy("rebot-sprite");
     engine.objectUpdater.add("PLAY", function(T: number, objects: any) {
         objects.add(assets.get("building1"), 1, 3);
         objects.add(assets.get("building1"), 3, 8);
@@ -86,7 +87,7 @@ import {Loader} from "gloop/assets/loader"
         objects.add(assets.get("building1"), 14, 7);
         objects.add(assets.get("building1"), 9, 14);
         objects.add(assets.get("building1"), 10, 10);
-        objects.add(assets.get("rebot-sprite"), 0, 0);
+        objects.add(originalBoi, 2, 7);
     }, "buildings")
 
     loop.displayUpdater.add("PLAY", function() {
@@ -141,24 +142,23 @@ import {Loader} from "gloop/assets/loader"
         "c": () => {
             let clabel = "rebot-" + (camera.coord.icX << 0) + (camera.coord.icY << 0);
             if (!anims.hasOwnProperty(clabel)){
-                let e = assets.copy("rebot-sprite"),
+                let e = <Frameset> assets.copy("rebot-sprite"),
                 c = new Coordinates(
+                        0,
+                        0,
+                        0,
+                        0,
                         config.tileTopW,
                         config.isoDecalX,
-                        config.isoDecalY,
-                        0,
-                        0,
-                        0,
-                        0
+                        config.isoDecalY
                     );
-                    // c.computeCenter()
                 
                 let cc = c.fromTileCoordinates(
                     camera.coord.icX - (camera.coord.icX << 0),
-                    camera.coord.icX - (camera.coord.icX << 0)
+                    camera.coord.icY - (camera.coord.icY << 0)
                 )
                 e.sprite.dx = cc.x
-                e.sprite.dy = cc.y - 32
+                e.sprite.dy = cc.y - config.isoDecalY
                 anims[clabel] = {
                     entity: e,
                     x: camera.coord.icX,
