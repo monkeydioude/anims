@@ -15,12 +15,21 @@
             #debug {
                 border: 1px dotted purple;                
             }
+            #controls {
+                display: inline-block;
+                vertical-align: top;
+            }
             </style>
             <link rel="icon" type="image/png" href="../assets/misc/donot.png" />
     </head>
     <body>
-        Z/W, Q/A, S, D, Espace, C<br />
         <canvas id="board" width="800" height="600"></canvas>
         <canvas id="buffer" width="800" height="600"></canvas>
+        <div id="controls">
+            Movements: Z(W), Q(A), S, D<br />
+            Pause: P<br />
+            Factory: E <br />
+            Rebot: C<br />
+    </div>
     </body>
 </html>
