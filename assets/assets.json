@@ -29,7 +29,7 @@
     },
     "type": "image"
   },
-  "rebot-sprite": {
+  "rebot": {
     "frames": [
       {
       "filename": "rebot 0.aseprite",

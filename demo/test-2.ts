@@ -25,17 +25,13 @@ function loadingBehavior(core: Core, state: StateMachine): void {
 
 function playBehavior(core: Core, state: StateMachine): void {
     let camera = core.getDisplayEngine().getCamera(),
-        originalBois = [
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-        core.getAssetsLoader().copy("rebot-sprite"),
-    ];
+        originalBois: any[] = [],
+        maxBoisPerRow = 73,
+        aBois = maxBoisPerRow * 6;
+
+    for (let i = 0; i < aBois; i++) {
+        originalBois[i] = core.getAssetsLoader().copy("rebot-frameset")
+    }
 
     core.getDisplayEngine().objectUpdater.add("PLAY", function(T: number, objects: any) {
         objects.add(core.getAssetsLoader().get("building1"), 1, 3, 10);
@@ -44,16 +40,9 @@ function playBehavior(core: Core, state: StateMachine): void {
         objects.add(core.getAssetsLoader().get("building1"), 14, 7, 10);
         objects.add(core.getAssetsLoader().get("building1"), 9, 14, 10);
         objects.add(core.getAssetsLoader().get("building1"), 10, 10, 10);
-        objects.add(originalBois[0], 2, 7)
-        objects.add(originalBois[1], 6.5, 6.5)
-        objects.add(originalBois[2], 6.5, 6.75)
-        objects.add(originalBois[3], 6.5, 7)
-        objects.add(originalBois[4], 6.5, 7.25)
-        objects.add(originalBois[5], 6.5, 7.5)
-        objects.add(originalBois[6], 6.5, 7.75)
-        objects.add(originalBois[7], 6.5, 8)
-        objects.add(originalBois[8], 6.5, 8.25)
-        objects.add(originalBois[9], 6.5, 8.5)
+        for (let j = 0; j < aBois; j++) {
+            objects.add(originalBois[j], 0.5 + (1 * ((j / maxBoisPerRow) << 0)), 0 + ((j % maxBoisPerRow) * 0.25))
+        }
     }, "buildings")
 
     core.getDisplayUpdater().add("PLAY", function() {
@@ -171,8 +160,8 @@ function pauseBehavior(core: Core, state: StateMachine): void {
 
 (new Browser()).onReady(function() {
     let camera = new Camera(new Coordinates(
-            6.5,
-            6.5,
+            2.5,
+            9.5,
             config.canvasMX,
             config.canvasMY,
             config.tileTopW,
@@ -194,7 +183,7 @@ function pauseBehavior(core: Core, state: StateMachine): void {
             ),
         core = new Core(displayUpdater, dataUpdater, assets, engine),
         sm = new StateMachine(core),
-        loop = new Loop(30, sm, displayUpdater, dataUpdater);
+        loop = new Loop(60, sm, displayUpdater, dataUpdater);
     
     fetch(new Request('../assets/assets.json')).then(function(res) {
         res.json().then(function(data) {
@@ -209,8 +198,8 @@ function pauseBehavior(core: Core, state: StateMachine): void {
     // console.log(new Coordinates(64, 32, 16, 0, 0, 0, 0).fromTileCoordinates(3, 0))
 
     var map = new Map([
-            ['0_0', '0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_1', '0_0', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
+            ['0_1', '0_0', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_1', '0_0' ],
+            ['0_0', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_1' ],
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', null, null, null, '0_0', '0_1', '0_0', '0_1' ],
@@ -225,8 +214,8 @@ function pauseBehavior(core: Core, state: StateMachine): void {
             ['0_1', '0_0', '0_1', null, null, null, '0_1', '0_0', '0_1', '0_0' ],
             ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
             ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ],
-            ['0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1' ],
-            ['0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0' ]
+            ['0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_0' ],
+            ['0_0', '0_1', '0_1', '0_0', '0_1', '0_0', '0_1', '0_0', '0_0', '0_1' ]
         ],
         assets
     );
