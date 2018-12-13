@@ -27,7 +27,7 @@ function playBehavior(core: Core, state: StateMachine): void {
     let camera = core.getDisplayEngine().getCamera(),
         originalBois: any[] = [],
         maxBoisPerRow = 73,
-        aBois = maxBoisPerRow * 6;
+        aBois = maxBoisPerRow * 14;
 
     for (let i = 0; i < aBois; i++) {
         originalBois[i] = core.getAssetsLoader().copy("rebot-frameset")
